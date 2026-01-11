@@ -88,4 +88,4 @@ Default timer settings (can be changed in the UI):
 
 ## License
 
-MIT
+Do whatever you want with it.
