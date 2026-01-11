@@ -1,0 +1,13 @@
+services:
+  pomotrack:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+    environment:
+      - TZ=UTC
+    # Uncomment for development with live reload
+    # volumes:
+    #   - ./backend/app:/app/app:ro
