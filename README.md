@@ -22,7 +22,7 @@ A self-hosted, single-user Pomodoro timer that is simple to use and run and noth
 docker compose up -d
 ```
 
-Open http://localhost:8000 in your browser.
+Open http://localhost:7070 in your browser.
 
 ### Development Setup
 
@@ -35,7 +35,7 @@ Open http://localhost:8000 in your browser.
 ```bash
 cd backend
 uv sync
-uv run uvicorn app.main:app --reload --port 8000
+uv run uvicorn app.main:app --reload --port 7070
 ```
 
 **Frontend:**

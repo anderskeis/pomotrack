@@ -49,8 +49,8 @@ app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "http://localhost:8000",
-        "http://127.0.0.1:8000",
+        "http://localhost:7070",
+        "http://127.0.0.1:7070",
         "http://localhost:5173",  # Vite dev server
         "http://127.0.0.1:5173",
     ],

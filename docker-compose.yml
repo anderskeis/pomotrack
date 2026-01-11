@@ -4,8 +4,8 @@ services:
       context: .
       dockerfile: Dockerfile
     ports:
-      # Bind to localhost only for security; change to "8000:8000" for LAN access
-      - "127.0.0.1:8000:8000"
+      # Bind to localhost only for security; change to "7070:7070" for LAN access
+      - "127.0.0.1:7070:7070"
     restart: unless-stopped
     environment:
       - TZ=UTC
