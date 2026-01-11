@@ -4,10 +4,20 @@ services:
       context: .
       dockerfile: Dockerfile
     ports:
-      - "8000:8000"
+      # Bind to localhost only for security; change to "8000:8000" for LAN access
+      - "127.0.0.1:8000:8000"
     restart: unless-stopped
     environment:
       - TZ=UTC
+    # Security: Read-only root filesystem
+    read_only: true
+    tmpfs:
+      - /tmp:noexec,nosuid,size=64m
+    # Security: Drop all capabilities and prevent privilege escalation
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
     # Uncomment for development with live reload
     # volumes:
     #   - ./backend/app:/app/app:ro

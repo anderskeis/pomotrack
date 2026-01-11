@@ -73,7 +73,7 @@ const sessionLabel = computed(() => {
 }
 
 .time {
-  font-size: 6rem;
+  font-size: 7.2rem;
   font-weight: 700;
   font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
   letter-spacing: 0.05em;
@@ -87,11 +87,13 @@ const sessionLabel = computed(() => {
 }
 
 .current-label {
-  font-size: 0.875rem;
-  color: var(--text-muted);
-  background: var(--bg-subtle);
-  padding: 0.25rem 0.75rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  background: var(--color-primary);
+  padding: 0.5rem 1.25rem;
   border-radius: 999px;
+  box-shadow: 0 2px 8px var(--color-primary-shadow);
 }
 
 /* Session type variants */
@@ -109,7 +111,11 @@ const sessionLabel = computed(() => {
 
 @media (max-width: 640px) {
   .time {
-    font-size: 4rem;
+    font-size: 4.8rem;
+  }
+
+  .current-label {
+    font-size: 1rem;
   }
 }
 </style>

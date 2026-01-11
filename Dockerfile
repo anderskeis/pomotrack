@@ -36,6 +36,13 @@ COPY backend/app ./app
 # Copy built frontend to static directory
 COPY --from=frontend-builder /app/frontend/dist ./static
 
+# Create non-root user for security
+RUN useradd --create-home --shell /bin/bash --uid 1000 pomotrack && \
+    chown -R pomotrack:pomotrack /app
+
+# Switch to non-root user
+USER pomotrack
+
 # Expose port
 EXPOSE 8000
 
