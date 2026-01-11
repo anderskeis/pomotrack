@@ -51,6 +51,7 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:7070",
         "http://127.0.0.1:7070",
+        "http://192.168.0.158:7070",  # LAN access
         "http://localhost:5173",  # Vite dev server
         "http://127.0.0.1:5173",
     ],
