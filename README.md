@@ -1,6 +1,6 @@
 # Pomotrack
 
-A self-hosted, single-user Pomodoro timer with a Grafana-style dashboard UI.
+A self-hosted, single-user Pomodoro timer that is simple to use and run and nothing more.
 
 > ⚠️ **Security Notice:** This application is designed for **local/LAN use only**. It has no authentication and should **not be exposed to the public internet**. If you need remote access, place it behind a VPN or authenticated reverse proxy.
 
