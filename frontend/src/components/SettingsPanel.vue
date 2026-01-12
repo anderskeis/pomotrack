@@ -139,6 +139,17 @@
       </div>
 
       <div class="setting-item setting-row">
+        <label class="setting-label">Urgency warning</label>
+        <button 
+          @click="$emit('toggleUrgencyWarning')"
+          class="btn btn-toggle"
+          :class="{ active: urgencyWarningEnabled }"
+        >
+          {{ urgencyWarningEnabled ? '⚠️ On' : '✗ Off' }}
+        </button>
+      </div>
+
+      <div class="setting-item setting-row">
         <label class="setting-label">Keep screen on</label>
         <button 
           @click="$emit('toggleWakeLock')"
@@ -190,6 +201,7 @@ const props = defineProps<{
   wakeLockEnabled: boolean
   wakeLockSupported: boolean
   compactMode: boolean
+  urgencyWarningEnabled: boolean
 }>()
 
 const emit = defineEmits<{
@@ -198,6 +210,7 @@ const emit = defineEmits<{
   toggleTheme: []
   toggleWakeLock: []
   toggleCompact: []
+  toggleUrgencyWarning: []
   requestNotifications: []
   clearData: []
 }>()

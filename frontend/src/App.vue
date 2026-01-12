@@ -25,7 +25,7 @@
             :formattedTime="formattedTime"
             :sessionType="sessionType"
             :currentLabel="sessionLabel"
-            :urgencyLevel="urgencyLevel"
+            :urgencyLevel="urgencyWarningEnabled ? urgencyLevel : 'normal'"
             :isRunning="isRunning"
           />
           <TimerControls
@@ -114,12 +114,14 @@
               :wakeLockEnabled="wakeLockEnabled"
               :wakeLockSupported="wakeLockSupported"
               :compactMode="compactMode"
+              :urgencyWarningEnabled="urgencyWarningEnabled"
               @update:config="config = $event"
               @toggleSound="soundEnabled = !soundEnabled"
               @toggleTheme="toggleTheme"
               @requestNotifications="handleRequestNotifications"
               @toggleWakeLock="wakeLockEnabled = !wakeLockEnabled"
               @toggleCompact="compactMode = !compactMode"
+              @toggleUrgencyWarning="urgencyWarningEnabled = !urgencyWarningEnabled"
               @clearData="handleClearData"
             />
           </div>
@@ -164,6 +166,7 @@ const soundEnabled = useStorage('sound-enabled', true)
 const notificationsEnabled = useStorage('notifications-enabled', false)
 const wakeLockEnabled = useStorage('wake-lock-enabled', false)
 const compactMode = useStorage('compact-mode', false)
+const urgencyWarningEnabled = useStorage('urgency-warning-enabled', true)
 
 // Session history
 const { 
