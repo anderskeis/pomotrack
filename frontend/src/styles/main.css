@@ -68,6 +68,10 @@ select {
     --color-short-break: #22c55e;
     --color-long-break: #3b82f6;
 
+    /* Urgency colors */
+    --color-urgency-warning: #f59e0b;
+    --color-urgency-critical: #ef4444;
+
     /* Shadows */
     --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
     --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.4);
@@ -96,6 +100,10 @@ select {
     --color-primary: #dc2626;
     --color-primary-hover: #b91c1c;
     --color-primary-shadow: rgba(220, 38, 38, 0.2);
+
+    /* Urgency colors - slightly adjusted for light theme */
+    --color-urgency-warning: #d97706;
+    --color-urgency-critical: #dc2626;
 
     /* Shadows */
     --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);

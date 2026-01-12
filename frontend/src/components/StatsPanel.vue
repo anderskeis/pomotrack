@@ -1,5 +1,25 @@
 <template>
   <div class="stats-panel">
+    <h3 class="panel-title">Daily Progress</h3>
+    
+    <!-- Daily Goal Progress -->
+    <div class="goal-progress">
+      <div class="goal-header">
+        <span class="goal-text">{{ completedPomodoros }}/{{ dailyGoal }} 🍅</span>
+        <span class="goal-percent">{{ goalPercent }}%</span>
+      </div>
+      <div class="progress-bar">
+        <div 
+          class="progress-fill" 
+          :style="{ width: `${Math.min(goalPercent, 100)}%` }"
+          :class="{ complete: goalPercent >= 100 }"
+        ></div>
+      </div>
+      <p v-if="goalPercent >= 100" class="goal-complete">🎉 Daily goal reached!</p>
+    </div>
+
+    <div class="settings-divider"></div>
+
     <h3 class="panel-title">Session Stats</h3>
     <div class="stats-grid">
       <div class="stat-item">
@@ -24,7 +44,10 @@
         </div>
       </div>
     </div>
-    <p class="stats-note">Stats reset on page refresh</p>
+
+    <button v-if="hasHistory" class="btn btn-summary" @click="$emit('showSummary')">
+      View Summary
+    </button>
   </div>
 </template>
 
@@ -35,6 +58,12 @@ const props = defineProps<{
   completedPomodoros: number
   completedBreaks: number
   focusDuration: number // minutes per pomodoro
+  dailyGoal: number
+  hasHistory: boolean
+}>()
+
+defineEmits<{
+  showSummary: []
 }>()
 
 const focusTime = computed(() => {
@@ -45,6 +74,11 @@ const focusTime = computed(() => {
   const hours = Math.floor(totalMinutes / 60)
   const mins = totalMinutes % 60
   return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`
+})
+
+const goalPercent = computed(() => {
+  if (props.dailyGoal <= 0) return 0
+  return Math.round((props.completedPomodoros / props.dailyGoal) * 100)
 })
 </script>
 
@@ -103,11 +137,75 @@ const focusTime = computed(() => {
   color: var(--text-muted);
 }
 
-.stats-note {
-  margin: 1rem 0 0 0;
-  font-size: 0.7rem;
-  color: var(--text-muted);
+.settings-divider {
+  height: 1px;
+  background: var(--border-color);
+  margin: 1rem 0;
+}
+
+.goal-progress {
+  margin-bottom: 0.5rem;
+}
+
+.goal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.goal-text {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.goal-percent {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.progress-bar {
+  height: 8px;
+  background: var(--bg-subtle);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--color-primary);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.progress-fill.complete {
+  background: var(--color-short-break);
+}
+
+.goal-complete {
+  margin: 0.5rem 0 0 0;
+  font-size: 0.875rem;
+  color: var(--color-short-break);
   text-align: center;
-  font-style: italic;
+  font-weight: 600;
+}
+
+.btn-summary {
+  width: 100%;
+  margin-top: 1rem;
+  padding: 0.5rem;
+  font-size: 0.75rem;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-summary:hover {
+  background: var(--bg-input);
+  color: var(--text-primary);
 }
 </style>

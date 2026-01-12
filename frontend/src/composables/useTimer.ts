@@ -1,12 +1,16 @@
 import { ref, computed, onUnmounted, watch } from 'vue'
 
 export type SessionType = 'focus' | 'short-break' | 'long-break'
+export type UrgencyLevel = 'normal' | 'warning' | 'critical'
 
 export interface TimerConfig {
     focusDuration: number // minutes
     shortBreakDuration: number // minutes
     longBreakDuration: number // minutes
     pomodorosUntilLongBreak: number
+    autoStartBreaks: boolean
+    autoStartFocus: boolean
+    dailyGoal: number
 }
 
 export interface TimerState {
@@ -17,11 +21,14 @@ export interface TimerState {
     completedBreaks: number
 }
 
-const defaultConfig: TimerConfig = {
+export const defaultConfig: TimerConfig = {
     focusDuration: 25,
     shortBreakDuration: 5,
     longBreakDuration: 15,
     pomodorosUntilLongBreak: 4,
+    autoStartBreaks: false,
+    autoStartFocus: false,
+    dailyGoal: 8,
 }
 
 export function useTimer(
@@ -58,6 +65,13 @@ export function useTimer(
 
     const progress = computed(() => {
         return ((sessionDuration.value - remaining.value) / sessionDuration.value) * 100
+    })
+
+    // Urgency level based on remaining time
+    const urgencyLevel = computed<UrgencyLevel>(() => {
+        if (remaining.value <= 30) return 'critical'
+        if (remaining.value <= 120) return 'warning'
+        return 'normal'
     })
 
     // Timer tick using timestamp-based calculation
@@ -97,6 +111,17 @@ export function useTimer(
 
         // Notify callback
         onSessionComplete?.(completedType)
+
+        // Auto-start next session if enabled
+        const nextIsBreak = sessionType.value !== 'focus'
+        const shouldAutoStart = nextIsBreak
+            ? config.value.autoStartBreaks
+            : config.value.autoStartFocus
+
+        if (shouldAutoStart) {
+            // Small delay to allow notifications to fire
+            setTimeout(() => start(), 500)
+        }
     }
 
     // Controls
@@ -179,6 +204,7 @@ export function useTimer(
         formattedTime,
         progress,
         sessionDuration,
+        urgencyLevel,
         // Methods
         start,
         pause,
