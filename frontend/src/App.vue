@@ -492,7 +492,7 @@ watch([formattedTime, sessionType], ([time, type]) => {
 }
 
 .modal-settings {
-  max-width: 480px;
+  max-width: 640px;
 }
 
 .modal-header {
