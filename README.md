@@ -39,11 +39,11 @@ A self-hosted, single-user Pomodoro timer that is simple to use and run and noth
 docker compose up -d
 ```
 
-Open http://localhost:7070 in your browser.
+Open http://localhost:8080 in your browser.
 
 ### LAN Access
 
-To access from other devices on your network, the app listens on all interfaces. Access via your machine's IP address (e.g., http://192.168.1.100:7070).
+To access from other devices on your network, the app listens on all interfaces. Access via your machine's IP address (e.g., http://192.168.1.100:8080).
 
 ### Development Setup
 
