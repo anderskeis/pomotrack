@@ -4,8 +4,10 @@ services:
       context: .
       dockerfile: Dockerfile
     ports:
-      # Bind to all interfaces for LAN access; use "127.0.0.1:7070:7070" for localhost only
-      - "7070:7070"
+      # Bind to all interfaces explicitly
+      - "0.0.0.0:7070:7070"
+      # Alternative port in case 7070 is blocked on Windows
+      - "0.0.0.0:8080:7070"
     restart: unless-stopped
     environment:
       - TZ=UTC
