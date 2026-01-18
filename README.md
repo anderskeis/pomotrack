@@ -79,6 +79,30 @@ Open http://localhost:5173 for development (with hot reload).
 
 ## Architecture
 
+```mermaid
+graph TD
+    User((User))
+    
+    subgraph Browser ["User's Browser"]
+        VueApp[Vue.js Frontend]
+        LocalStorage[(localStorage)]
+    end
+    
+    subgraph Server ["Docker Container (FastAPI)"]
+        API[API Routes]
+        Static[Static File Server]
+    end
+
+    User -->|Interacts with| VueApp
+    
+    VueApp -->|Reads/Writes Settings| LocalStorage
+    VueApp -->|Fetches Config| API
+    
+    Static -->|Serves App Bundle| VueApp
+```
+
+### Project Structure
+
 ```
 pomotrack/
 ├── backend/           # FastAPI backend
