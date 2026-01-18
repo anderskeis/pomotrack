@@ -7,6 +7,7 @@ A self-hosted, single-user Pomodoro timer that is simple to use and run and noth
 ## Features
 
 ### Timer
+
 - 🍅 Standard Pomodoro workflow (Focus → Short Break → Long Break)
 - ⚙️ Configurable timer durations
 - 🔄 Auto-start next session (optional)
@@ -14,17 +15,27 @@ A self-hosted, single-user Pomodoro timer that is simple to use and run and noth
 - ⚠️ Visual urgency warnings (optional pulsing at 2min/30sec remaining)
 
 ### Notifications & Alerts
+
 - 🔔 Browser notifications on session completion
 - 🔊 Audio alerts (bell sound)
 - 📱 Keep screen awake during timer (Wake Lock API)
 
 ### Tracking & Stats
+
 - 📊 Daily session statistics
 - 🎯 Daily goal progress tracking
 - 🏷️ Session labeling with presets and history
 - 📈 End-of-day summary modal
 
+### Kanban Board (Optional)
+
+- 📋 Built-in task management with 3-column kanban (Todo → In Progress → Done)
+- 🖱️ Drag-and-drop tasks between columns
+- 🍅 Automatic pomodoro counting per task
+- 💾 Tasks persist locally in localStorage
+
 ### Interface
+
 - 🌙 Dark/Light theme toggle
 - 📐 Compact mode for smaller displays
 - ⌨️ Keyboard shortcuts (Space, S, R, Escape)
@@ -48,11 +59,13 @@ To access from other devices on your network, the app listens on all interfaces.
 ### Development Setup
 
 **Prerequisites:**
+
 - Python 3.11+
 - Node.js 20+
 - uv (Python package manager)
 
 **Backend:**
+
 ```bash
 cd backend
 uv sync
@@ -60,6 +73,7 @@ uv run uvicorn app.main:app --reload --port 7070
 ```
 
 **Frontend:**
+
 ```bash
 cd frontend
 npm install
@@ -70,34 +84,34 @@ Open http://localhost:5173 for development (with hot reload).
 
 ## Keyboard Shortcuts
 
-| Key | Action |
-|-----|--------|
-| `Space` | Start/Pause timer |
-| `S` | Skip to next session |
-| `R` | Reset current session |
-| `Escape` | Close modals |
+| Key      | Action                |
+| -------- | --------------------- |
+| `Space`  | Start/Pause timer     |
+| `S`      | Skip to next session  |
+| `R`      | Reset current session |
+| `Escape` | Close modals          |
 
 ## Architecture
 
 ```mermaid
 graph TD
     User((User))
-    
+
     subgraph Browser ["User's Browser"]
         VueApp[Vue.js Frontend]
         LocalStorage[(localStorage)]
     end
-    
+
     subgraph Server ["Docker Container (FastAPI)"]
         API[API Routes]
         Static[Static File Server]
     end
 
     User -->|Interacts with| VueApp
-    
+
     VueApp -->|Reads/Writes Settings| LocalStorage
     VueApp -->|Fetches Config| API
-    
+
     Static -->|Serves App Bundle| VueApp
 ```
 
@@ -129,36 +143,37 @@ pomotrack/
 
 Default timer settings (configurable via ⚙️ Settings):
 
-| Setting | Default | Description |
-|---------|---------|-------------|
-| Focus duration | 25 min | Length of focus sessions |
-| Short break | 5 min | Length of short breaks |
-| Long break | 15 min | Length of long breaks |
-| Long break after | 4 🍅 | Pomodoros until long break |
-| Daily goal | 8 🍅 | Target pomodoros per day |
+| Setting          | Default | Description                |
+| ---------------- | ------- | -------------------------- |
+| Focus duration   | 25 min  | Length of focus sessions   |
+| Short break      | 5 min   | Length of short breaks     |
+| Long break       | 15 min  | Length of long breaks      |
+| Long break after | 4 🍅    | Pomodoros until long break |
+| Daily goal       | 8 🍅    | Target pomodoros per day   |
 
 ### Behavior Settings
 
-| Setting | Default | Description |
-|---------|---------|-------------|
-| Auto-start breaks | Off | Automatically start break after focus |
-| Auto-start focus | Off | Automatically start focus after break |
-| Keep screen on | Off | Prevent screen sleep during timer |
+| Setting           | Default | Description                           |
+| ----------------- | ------- | ------------------------------------- |
+| Auto-start breaks | Off     | Automatically start break after focus |
+| Auto-start focus  | Off     | Automatically start focus after break |
+| Keep screen on    | Off     | Prevent screen sleep during timer     |
 
 ### Alert Settings
 
-| Setting | Default | Description |
-|---------|---------|-------------|
-| Sound | On | Play sound when session ends |
-| Notifications | Off | Show browser notification |
-| Urgency warning | On | Visual pulse near session end |
+| Setting         | Default | Description                   |
+| --------------- | ------- | ----------------------------- |
+| Sound           | On      | Play sound when session ends  |
+| Notifications   | Off     | Show browser notification     |
+| Urgency warning | On      | Visual pulse near session end |
 
 ### Display Settings
 
-| Setting | Default | Description |
-|---------|---------|-------------|
-| Theme | Dark | Dark or Light mode |
-| Compact mode | Off | Smaller timer for limited space |
+| Setting      | Default | Description                                       |
+| ------------ | ------- | ------------------------------------------------- |
+| Theme        | Dark    | Dark or Light mode                                |
+| Compact mode | Off     | Smaller timer for limited space                   |
+| Kanban board | Off     | Enable task kanban board (replaces session label) |
 
 ## Browser Support
 
