@@ -6,7 +6,9 @@ export { useStorage, clearAllStorage, getStorageValue, setStorageValue } from '.
 export { useSessionHistory } from './useSessionHistory'
 export { useFavicon } from './useFavicon'
 export { useWakeLock } from './useWakeLock'
+export { useKanban } from './useKanban'
 
 export type { TimerConfig, TimerState, SessionType, UrgencyLevel } from './useTimer'
 export type { Theme } from './useTheme'
 export type { SessionHistoryEntry, SessionHistory } from './useSessionHistory'
+export type { KanbanTask, KanbanStatus, KanbanState } from './useKanban'

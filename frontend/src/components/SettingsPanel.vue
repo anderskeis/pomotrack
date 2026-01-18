@@ -12,7 +12,12 @@
                 id="focus-duration"
                 type="number"
                 :value="config.focusDuration"
-                @change="updateConfig('focusDuration', ($event.target as HTMLInputElement).valueAsNumber)"
+                @change="
+                  updateConfig(
+                    'focusDuration',
+                    ($event.target as HTMLInputElement).valueAsNumber
+                  )
+                "
                 min="1"
                 max="120"
                 class="input input-number"
@@ -28,7 +33,12 @@
                 id="short-break"
                 type="number"
                 :value="config.shortBreakDuration"
-                @change="updateConfig('shortBreakDuration', ($event.target as HTMLInputElement).valueAsNumber)"
+                @change="
+                  updateConfig(
+                    'shortBreakDuration',
+                    ($event.target as HTMLInputElement).valueAsNumber
+                  )
+                "
                 min="1"
                 max="30"
                 class="input input-number"
@@ -44,7 +54,12 @@
                 id="long-break"
                 type="number"
                 :value="config.longBreakDuration"
-                @change="updateConfig('longBreakDuration', ($event.target as HTMLInputElement).valueAsNumber)"
+                @change="
+                  updateConfig(
+                    'longBreakDuration',
+                    ($event.target as HTMLInputElement).valueAsNumber
+                  )
+                "
                 min="1"
                 max="60"
                 class="input input-number"
@@ -54,13 +69,20 @@
           </div>
 
           <div class="setting-item">
-            <label for="long-break-interval" class="setting-label">Long Break After</label>
+            <label for="long-break-interval" class="setting-label"
+              >Long Break After</label
+            >
             <div class="setting-control">
               <input
                 id="long-break-interval"
                 type="number"
                 :value="config.pomodorosUntilLongBreak"
-                @change="updateConfig('pomodorosUntilLongBreak', ($event.target as HTMLInputElement).valueAsNumber)"
+                @change="
+                  updateConfig(
+                    'pomodorosUntilLongBreak',
+                    ($event.target as HTMLInputElement).valueAsNumber
+                  )
+                "
                 min="1"
                 max="10"
                 class="input input-number"
@@ -76,7 +98,12 @@
                 id="daily-goal"
                 type="number"
                 :value="config.dailyGoal"
-                @change="updateConfig('dailyGoal', ($event.target as HTMLInputElement).valueAsNumber)"
+                @change="
+                  updateConfig(
+                    'dailyGoal',
+                    ($event.target as HTMLInputElement).valueAsNumber
+                  )
+                "
                 min="1"
                 max="20"
                 class="input input-number"
@@ -93,29 +120,33 @@
         <div class="settings-group">
           <div class="setting-item setting-row">
             <label class="setting-label">Auto-start breaks</label>
-            <button 
-              @click="updateConfigBool('autoStartBreaks', !config.autoStartBreaks)"
+            <button
+              @click="
+                updateConfigBool('autoStartBreaks', !config.autoStartBreaks)
+              "
               class="btn btn-toggle"
               :class="{ active: config.autoStartBreaks }"
             >
-              {{ config.autoStartBreaks ? '✓ On' : '✗ Off' }}
+              {{ config.autoStartBreaks ? "✓ On" : "✗ Off" }}
             </button>
           </div>
 
           <div class="setting-item setting-row">
             <label class="setting-label">Auto-start focus</label>
-            <button 
-              @click="updateConfigBool('autoStartFocus', !config.autoStartFocus)"
+            <button
+              @click="
+                updateConfigBool('autoStartFocus', !config.autoStartFocus)
+              "
               class="btn btn-toggle"
               :class="{ active: config.autoStartFocus }"
             >
-              {{ config.autoStartFocus ? '✓ On' : '✗ Off' }}
+              {{ config.autoStartFocus ? "✓ On" : "✗ Off" }}
             </button>
           </div>
 
           <div class="setting-item setting-row">
             <label class="setting-label">Keep screen on</label>
-            <button 
+            <button
               @click="$emit('toggleWakeLock')"
               class="btn btn-toggle"
               :class="{ active: wakeLockEnabled }"
@@ -133,19 +164,19 @@
         <div class="settings-group">
           <div class="setting-item setting-row">
             <label class="setting-label">Sound</label>
-            <button 
-              @click="$emit('toggleSound')" 
+            <button
+              @click="$emit('toggleSound')"
               class="btn btn-toggle"
               :class="{ active: soundEnabled }"
             >
-              {{ soundEnabled ? '🔔 On' : '🔕 Off' }}
+              {{ soundEnabled ? "🔔 On" : "🔕 Off" }}
             </button>
           </div>
 
           <div class="setting-item setting-row">
             <label class="setting-label">Notifications</label>
-            <button 
-              @click="$emit('requestNotifications')" 
+            <button
+              @click="$emit('requestNotifications')"
               class="btn btn-toggle"
               :class="{ active: notificationsEnabled }"
               :disabled="notificationPermission === 'denied'"
@@ -156,36 +187,47 @@
 
           <div class="setting-item setting-row">
             <label class="setting-label">Urgency warning</label>
-            <button 
+            <button
               @click="$emit('toggleUrgencyWarning')"
               class="btn btn-toggle"
               :class="{ active: urgencyWarningEnabled }"
             >
-              {{ urgencyWarningEnabled ? '⚠️ On' : '✗ Off' }}
+              {{ urgencyWarningEnabled ? "⚠️ On" : "✗ Off" }}
             </button>
           </div>
         </div>
       </div>
 
-      <!-- Display Column -->
+      <!-- Display & Features Column -->
       <div class="settings-column">
         <h3 class="panel-title">Display</h3>
         <div class="settings-group">
           <div class="setting-item setting-row">
             <label class="setting-label">Theme</label>
             <button @click="$emit('toggleTheme')" class="btn btn-toggle">
-              {{ theme === 'dark' ? '🌙 Dark' : '☀️ Light' }}
+              {{ theme === "dark" ? "🌙 Dark" : "☀️ Light" }}
             </button>
           </div>
 
           <div class="setting-item setting-row">
             <label class="setting-label">Compact mode</label>
-            <button 
+            <button
               @click="$emit('toggleCompact')"
               class="btn btn-toggle"
               :class="{ active: compactMode }"
             >
-              {{ compactMode ? '✓ On' : '✗ Off' }}
+              {{ compactMode ? "✓ On" : "✗ Off" }}
+            </button>
+          </div>
+
+          <div class="setting-item setting-row">
+            <label class="setting-label">Kanban board</label>
+            <button
+              @click="$emit('toggleKanban')"
+              class="btn btn-toggle"
+              :class="{ active: kanbanEnabled }"
+            >
+              {{ kanbanEnabled ? "📋 On" : "✗ Off" }}
             </button>
           </div>
         </div>
@@ -201,54 +243,56 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import type { TimerConfig, Theme } from '../composables'
+import { computed } from "vue";
+import type { TimerConfig, Theme } from "../composables";
 
 const props = defineProps<{
-  config: TimerConfig
-  soundEnabled: boolean
-  notificationsEnabled: boolean
-  notificationPermission: NotificationPermission
-  theme: Theme
-  wakeLockEnabled: boolean
-  wakeLockSupported: boolean
-  compactMode: boolean
-  urgencyWarningEnabled: boolean
-}>()
+  config: TimerConfig;
+  soundEnabled: boolean;
+  notificationsEnabled: boolean;
+  notificationPermission: NotificationPermission;
+  theme: Theme;
+  wakeLockEnabled: boolean;
+  wakeLockSupported: boolean;
+  compactMode: boolean;
+  urgencyWarningEnabled: boolean;
+  kanbanEnabled: boolean;
+}>();
 
 const emit = defineEmits<{
-  'update:config': [config: TimerConfig]
-  toggleSound: []
-  toggleTheme: []
-  toggleWakeLock: []
-  toggleCompact: []
-  toggleUrgencyWarning: []
-  requestNotifications: []
-  clearData: []
-}>()
+  "update:config": [config: TimerConfig];
+  toggleSound: [];
+  toggleTheme: [];
+  toggleWakeLock: [];
+  toggleCompact: [];
+  toggleUrgencyWarning: [];
+  toggleKanban: [];
+  requestNotifications: [];
+  clearData: [];
+}>();
 
 const updateConfig = (key: keyof TimerConfig, value: number) => {
-  if (isNaN(value) || value < 1) return
-  emit('update:config', { ...props.config, [key]: value })
-}
+  if (isNaN(value) || value < 1) return;
+  emit("update:config", { ...props.config, [key]: value });
+};
 
 const updateConfigBool = (key: keyof TimerConfig, value: boolean) => {
-  emit('update:config', { ...props.config, [key]: value })
-}
+  emit("update:config", { ...props.config, [key]: value });
+};
 
 const notificationButtonText = computed(() => {
-  if (props.notificationPermission === 'denied') {
-    return '🚫 Blocked'
+  if (props.notificationPermission === "denied") {
+    return "🚫 Blocked";
   }
-  return props.notificationsEnabled ? '🔔 On' : '🔕 Off'
-})
+  return props.notificationsEnabled ? "🔔 On" : "🔕 Off";
+});
 
 const wakeLockButtonText = computed(() => {
   if (!props.wakeLockSupported) {
-    return '🚫 N/A'
+    return "🚫 N/A";
   }
-  return props.wakeLockEnabled ? '☀️ On' : '🌑 Off'
-})
+  return props.wakeLockEnabled ? "☀️ On" : "🌑 Off";
+});
 </script>
 
 <style scoped>

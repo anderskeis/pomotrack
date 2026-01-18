@@ -8,10 +8,18 @@
         </h1>
       </div>
       <div class="header-right">
-        <button @click="toggleTheme" class="theme-toggle" :title="`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`">
-          {{ theme === 'dark' ? '☀️' : '🌙' }}
+        <button
+          @click="toggleTheme"
+          class="theme-toggle"
+          :title="`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`"
+        >
+          {{ theme === "dark" ? "☀️" : "🌙" }}
         </button>
-        <button @click="showSettingsModal = true" class="settings-toggle" title="Settings">
+        <button
+          @click="showSettingsModal = true"
+          class="settings-toggle"
+          title="Settings"
+        >
           ⚙️
         </button>
       </div>
@@ -42,11 +50,13 @@
 
         <!-- Sidebar -->
         <aside class="sidebar">
-          <SessionLabel 
-            v-model="sessionLabel" 
+          <KanbanPanel v-if="kanbanEnabled" />
+          <SessionLabel
+            v-else
+            v-model="sessionLabel"
             :recentLabels="recentLabels"
           />
-          
+
           <StatsPanel
             :completedPomodoros="completedPomodoros"
             :completedBreaks="completedBreaks"
@@ -65,11 +75,17 @@
 
     <!-- Summary Modal -->
     <Teleport to="body">
-      <div v-if="showSummaryModal" class="modal-overlay" @click.self="showSummaryModal = false">
+      <div
+        v-if="showSummaryModal"
+        class="modal-overlay"
+        @click.self="showSummaryModal = false"
+      >
         <div class="modal">
           <div class="modal-header">
             <h2>Today's Summary</h2>
-            <button class="modal-close" @click="showSummaryModal = false">&times;</button>
+            <button class="modal-close" @click="showSummaryModal = false">
+              &times;
+            </button>
           </div>
           <div class="modal-body">
             <div class="summary-stat">
@@ -77,14 +93,19 @@
               <span class="summary-label">Focus Sessions</span>
             </div>
             <div class="summary-stat">
-              <span class="summary-value">{{ todayStats.totalFocusMinutes }}</span>
+              <span class="summary-value">{{
+                todayStats.totalFocusMinutes
+              }}</span>
               <span class="summary-label">Minutes Focused</span>
             </div>
             <div class="summary-stat">
               <span class="summary-value">{{ todayStats.breakCount }}</span>
               <span class="summary-label">Breaks Taken</span>
             </div>
-            <div v-if="todayStats.labelBreakdown.length > 0" class="summary-breakdown">
+            <div
+              v-if="todayStats.labelBreakdown.length > 0"
+              class="summary-breakdown"
+            >
               <h3>By Label</h3>
               <ul>
                 <li v-for="item in todayStats.labelBreakdown" :key="item.label">
@@ -98,11 +119,17 @@
       </div>
 
       <!-- Settings Modal -->
-      <div v-if="showSettingsModal" class="modal-overlay" @click.self="showSettingsModal = false">
+      <div
+        v-if="showSettingsModal"
+        class="modal-overlay"
+        @click.self="showSettingsModal = false"
+      >
         <div class="modal modal-settings">
           <div class="modal-header">
             <h2>⚙️ Settings</h2>
-            <button class="modal-close" @click="showSettingsModal = false">&times;</button>
+            <button class="modal-close" @click="showSettingsModal = false">
+              &times;
+            </button>
           </div>
           <div class="modal-body">
             <SettingsPanel
@@ -115,13 +142,17 @@
               :wakeLockSupported="wakeLockSupported"
               :compactMode="compactMode"
               :urgencyWarningEnabled="urgencyWarningEnabled"
+              :kanbanEnabled="kanbanEnabled"
               @update:config="config = $event"
               @toggleSound="soundEnabled = !soundEnabled"
               @toggleTheme="toggleTheme"
               @requestNotifications="handleRequestNotifications"
               @toggleWakeLock="wakeLockEnabled = !wakeLockEnabled"
               @toggleCompact="compactMode = !compactMode"
-              @toggleUrgencyWarning="urgencyWarningEnabled = !urgencyWarningEnabled"
+              @toggleUrgencyWarning="
+                urgencyWarningEnabled = !urgencyWarningEnabled
+              "
+              @toggleKanban="kanbanEnabled = !kanbanEnabled"
               @clearData="handleClearData"
             />
           </div>
@@ -132,96 +163,109 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted, onUnmounted } from 'vue'
-import { 
-  TimerDisplay, 
-  TimerControls, 
-  SessionLabel, 
-  StatsPanel, 
-  SettingsPanel 
-} from './components'
-import { 
-  useTimer, 
-  useNotifications, 
-  useAudio, 
+import { ref, watch, onMounted, onUnmounted } from "vue";
+import {
+  TimerDisplay,
+  TimerControls,
+  SessionLabel,
+  StatsPanel,
+  SettingsPanel,
+  KanbanPanel,
+} from "./components";
+import {
+  useTimer,
+  useNotifications,
+  useAudio,
   useTheme,
   useStorage,
   useSessionHistory,
   useFavicon,
   useWakeLock,
+  useKanban,
   defaultConfig,
   clearAllStorage,
   type TimerConfig,
-  type SessionType
-} from './composables'
+  type SessionType,
+} from "./composables";
 
 // Theme
-const { theme, toggleTheme } = useTheme()
+const { theme, toggleTheme } = useTheme();
 
 // Session label (ephemeral)
-const sessionLabel = ref('')
+const sessionLabel = ref("");
 
 // Persisted settings
-const soundEnabled = useStorage('sound-enabled', true)
-const notificationsEnabled = useStorage('notifications-enabled', false)
-const wakeLockEnabled = useStorage('wake-lock-enabled', false)
-const compactMode = useStorage('compact-mode', false)
-const urgencyWarningEnabled = useStorage('urgency-warning-enabled', true)
+const soundEnabled = useStorage("sound-enabled", true);
+const notificationsEnabled = useStorage("notifications-enabled", false);
+const wakeLockEnabled = useStorage("wake-lock-enabled", false);
+const compactMode = useStorage("compact-mode", false);
+const urgencyWarningEnabled = useStorage("urgency-warning-enabled", true);
+const kanbanEnabled = useStorage("kanban-enabled", false);
+
+// Kanban board
+const { activeTask, incrementActiveTaskPomodoros, clearAllTasks } = useKanban();
 
 // Session history
-const { 
-  todayStats, 
-  recordSession, 
-  recentLabels,
-  clearHistory 
-} = useSessionHistory()
+const { todayStats, recordSession, recentLabels, clearHistory } =
+  useSessionHistory();
 
 // Modals
-const showSummaryModal = ref(false)
-const showSettingsModal = ref(false)
+const showSummaryModal = ref(false);
+const showSettingsModal = ref(false);
 
 // Audio
-const audio = useAudio('/sounds/bell.mp3')
+const audio = useAudio("/sounds/bell.mp3");
 
 // Notifications
-const { 
-  permission: notificationPermission, 
+const {
+  permission: notificationPermission,
   requestPermission,
-  notifySessionComplete 
-} = useNotifications()
+  notifySessionComplete,
+} = useNotifications();
 
 // Timer config - persisted
-const config = useStorage<TimerConfig>('timer-config', defaultConfig)
+const config = useStorage<TimerConfig>("timer-config", defaultConfig);
 
 // Track session start time for history
-let sessionStartTime = 0
+let sessionStartTime = 0;
 
 // Handle session completion
 const onSessionComplete = (completedSessionType: SessionType) => {
-  // Record to history
-  const duration = completedSessionType === 'focus' 
-    ? config.value.focusDuration * 60 
-    : completedSessionType === 'short-break'
+  // Record to history - use active task title as label if kanban is enabled
+  const currentLabel =
+    kanbanEnabled.value && activeTask.value
+      ? activeTask.value.title
+      : sessionLabel.value;
+
+  const duration =
+    completedSessionType === "focus"
+      ? config.value.focusDuration * 60
+      : completedSessionType === "short-break"
       ? config.value.shortBreakDuration * 60
-      : config.value.longBreakDuration * 60
-  
-  recordSession(completedSessionType, sessionLabel.value, duration, sessionStartTime)
-  
+      : config.value.longBreakDuration * 60;
+
+  recordSession(completedSessionType, currentLabel, duration, sessionStartTime);
+
+  // Increment pomodoro count on active kanban task
+  if (completedSessionType === "focus" && kanbanEnabled.value) {
+    incrementActiveTaskPomodoros();
+  }
+
   // Play sound
   if (soundEnabled.value) {
-    audio.play()
+    audio.play();
   }
-  
+
   // Send notification
   if (notificationsEnabled.value) {
-    notifySessionComplete(completedSessionType)
+    notifySessionComplete(completedSessionType);
   }
-  
-  // Clear label when focus session ends
-  if (completedSessionType === 'focus') {
-    sessionLabel.value = ''
+
+  // Clear label when focus session ends (only if not using kanban)
+  if (completedSessionType === "focus" && !kanbanEnabled.value) {
+    sessionLabel.value = "";
   }
-}
+};
 
 // Timer
 const {
@@ -237,98 +281,106 @@ const {
   pause,
   skip,
   reset,
-} = useTimer(config, onSessionComplete)
+} = useTimer(config, onSessionComplete);
 
 // Dynamic favicon
-useFavicon(progress, sessionType, remaining, isRunning)
+useFavicon(progress, sessionType, remaining, isRunning);
 
 // Wake lock
-const { isSupported: wakeLockSupported } = useWakeLock(isRunning, wakeLockEnabled)
+const { isSupported: wakeLockSupported } = useWakeLock(
+  isRunning,
+  wakeLockEnabled
+);
 
 // Request notification permission on first start
 const handleStart = async () => {
   // Track session start time
-  sessionStartTime = Date.now()
-  
+  sessionStartTime = Date.now();
+
   // Request notification permission if not yet requested
-  if (notificationPermission.value === 'default') {
-    const result = await requestPermission()
-    notificationsEnabled.value = result === 'granted'
+  if (notificationPermission.value === "default") {
+    const result = await requestPermission();
+    notificationsEnabled.value = result === "granted";
   }
-  
-  start()
-}
+
+  start();
+};
 
 // Handle notification permission request
 const handleRequestNotifications = async () => {
-  if (notificationPermission.value === 'default') {
-    const result = await requestPermission()
-    notificationsEnabled.value = result === 'granted'
-  } else if (notificationPermission.value === 'granted') {
-    notificationsEnabled.value = !notificationsEnabled.value
+  if (notificationPermission.value === "default") {
+    const result = await requestPermission();
+    notificationsEnabled.value = result === "granted";
+  } else if (notificationPermission.value === "granted") {
+    notificationsEnabled.value = !notificationsEnabled.value;
   }
-}
+};
 
 // Handle clear all data
 const handleClearData = () => {
-  if (confirm('This will clear all settings and history. Are you sure?')) {
-    clearAllStorage()
-    clearHistory()
+  if (confirm("This will clear all settings and history. Are you sure?")) {
+    clearAllStorage();
+    clearHistory();
+    clearAllTasks();
     // Reset local state
-    soundEnabled.value = true
-    notificationsEnabled.value = false
-    wakeLockEnabled.value = false
-    compactMode.value = false
-    config.value = { ...defaultConfig }
+    soundEnabled.value = true;
+    notificationsEnabled.value = false;
+    wakeLockEnabled.value = false;
+    compactMode.value = false;
+    kanbanEnabled.value = false;
+    config.value = { ...defaultConfig };
   }
-}
+};
 
 // Keyboard shortcuts
 const handleKeyDown = (e: KeyboardEvent) => {
   // Ignore if typing in an input
-  if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
-    return
+  if (
+    e.target instanceof HTMLInputElement ||
+    e.target instanceof HTMLTextAreaElement
+  ) {
+    return;
   }
-  
+
   switch (e.code) {
-    case 'Space':
-      e.preventDefault()
+    case "Space":
+      e.preventDefault();
       if (isRunning.value) {
-        pause()
+        pause();
       } else {
-        handleStart()
+        handleStart();
       }
-      break
-    case 'KeyS':
+      break;
+    case "KeyS":
       if (!e.ctrlKey && !e.metaKey) {
-        skip()
+        skip();
       }
-      break
-    case 'KeyR':
+      break;
+    case "KeyR":
       if (!e.ctrlKey && !e.metaKey) {
-        reset()
+        reset();
       }
-      break
-    case 'Escape':
-      showSummaryModal.value = false
-      showSettingsModal.value = false
-      break
+      break;
+    case "Escape":
+      showSummaryModal.value = false;
+      showSettingsModal.value = false;
+      break;
   }
-}
+};
 
 onMounted(() => {
-  document.addEventListener('keydown', handleKeyDown)
-})
+  document.addEventListener("keydown", handleKeyDown);
+});
 
 onUnmounted(() => {
-  document.removeEventListener('keydown', handleKeyDown)
-})
+  document.removeEventListener("keydown", handleKeyDown);
+});
 
 // Update document title with timer
 watch([formattedTime, sessionType], ([time, type]) => {
-  const icon = type === 'focus' ? '🍅' : '☕'
-  document.title = `${time} ${icon} Pomotrack`
-})
+  const icon = type === "focus" ? "🍅" : "☕";
+  document.title = `${time} ${icon} Pomotrack`;
+});
 </script>
 
 <style scoped>
@@ -524,6 +576,7 @@ watch([formattedTime, sessionType], ([time, type]) => {
 
 .modal-body {
   padding: 1.5rem;
+  overflow-y: auto;
 }
 
 .summary-stat {
@@ -591,18 +644,18 @@ watch([formattedTime, sessionType], ([time, type]) => {
   .dashboard {
     grid-template-columns: 1fr;
   }
-  
+
   .sidebar {
     order: -1;
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 1rem;
   }
-  
+
   .main {
     padding: 1rem;
   }
-  
+
   .header {
     padding: 1rem;
   }
