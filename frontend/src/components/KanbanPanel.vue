@@ -37,7 +37,7 @@
           <div
             v-for="task in todoTasks"
             :key="task.id"
-            class="task-card"
+            class="task-card task-todo"
             draggable="true"
             @dragstart="handleDragStart($event, task)"
             @dragend="handleDragEnd"
@@ -341,13 +341,30 @@ const handleDrop = (event: DragEvent, status: KanbanStatus) => {
   cursor: grabbing;
 }
 
-.task-card.task-active {
-  border-color: var(--color-primary);
-  background: var(--bg-secondary);
+/* Todo tasks - neutral/gray tint */
+.task-card.task-todo {
+  background: rgba(148, 163, 184, 0.1);
+  border-color: rgba(148, 163, 184, 0.3);
 }
 
+.task-card.task-todo:hover {
+  border-color: rgba(148, 163, 184, 0.5);
+}
+
+/* In Progress tasks - primary red/tomato tint */
+.task-card.task-active {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.4);
+}
+
+.task-card.task-active:hover {
+  border-color: var(--color-primary);
+}
+
+/* Done tasks - secondary indigo/purple tint */
 .task-card.task-done {
-  opacity: 0.7;
+  background: rgba(99, 102, 241, 0.1);
+  border-color: rgba(99, 102, 241, 0.3);
 }
 
 .task-card.task-done .task-title {
