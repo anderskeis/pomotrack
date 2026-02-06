@@ -1,4 +1,5 @@
 import { ref, computed, onUnmounted, watch } from 'vue'
+import { getStorageValue, setStorageValue } from './useStorage'
 
 export type SessionType = 'focus' | 'short-break' | 'long-break'
 export type UrgencyLevel = 'normal' | 'warning' | 'critical'
@@ -33,17 +34,40 @@ export const defaultConfig: TimerConfig = {
 
 export function useTimer(
     config = ref<TimerConfig>(defaultConfig),
-    onSessionComplete?: (sessionType: SessionType) => void
+    onSessionComplete?: (sessionType: SessionType) => void,
+    onSessionStart?: () => void
 ) {
+    // Restore persisted timer state if available
+    const savedState = getStorageValue<{
+        endTime: number | null
+        sessionType: SessionType
+        completedPomodoros: number
+        completedBreaks: number
+        remaining: number
+        isRunning: boolean
+    } | null>('timer-state', null)
+
     // State
-    const remaining = ref(config.value.focusDuration * 60)
+    const remaining = ref(savedState?.remaining ?? config.value.focusDuration * 60)
     const isRunning = ref(false)
-    const sessionType = ref<SessionType>('focus')
-    const completedPomodoros = ref(0)
-    const completedBreaks = ref(0)
+    const sessionType = ref<SessionType>(savedState?.sessionType ?? 'focus')
+    const completedPomodoros = ref(savedState?.completedPomodoros ?? 0)
+    const completedBreaks = ref(savedState?.completedBreaks ?? 0)
     const endTime = ref<number | null>(null)
 
     let intervalId: number | null = null
+
+    // Persist timer state on changes (lightweight, non-reactive write)
+    const persistState = () => {
+        setStorageValue('timer-state', {
+            endTime: endTime.value,
+            sessionType: sessionType.value,
+            completedPomodoros: completedPomodoros.value,
+            completedBreaks: completedBreaks.value,
+            remaining: remaining.value,
+            isRunning: isRunning.value,
+        })
+    }
 
     // Computed
     const sessionDuration = computed(() => {
@@ -108,6 +132,7 @@ export function useTimer(
 
         // Reset timer for new session
         remaining.value = sessionDuration.value
+        persistState()
 
         // Notify callback
         onSessionComplete?.(completedType)
@@ -120,7 +145,10 @@ export function useTimer(
 
         if (shouldAutoStart) {
             // Small delay to allow notifications to fire
-            setTimeout(() => start(), 500)
+            setTimeout(() => {
+                onSessionStart?.()
+                start()
+            }, 500)
         }
     }
 
@@ -131,6 +159,7 @@ export function useTimer(
         endTime.value = Date.now() + remaining.value * 1000
         isRunning.value = true
         intervalId = window.setInterval(tick, 250)
+        persistState()
     }
 
     const pause = () => {
@@ -151,11 +180,13 @@ export function useTimer(
         }
         endTime.value = null
         isRunning.value = false
+        persistState()
     }
 
     const reset = () => {
         stop()
         remaining.value = sessionDuration.value
+        persistState()
     }
 
     const skip = () => {
@@ -163,7 +194,9 @@ export function useTimer(
 
         // Transition to next session without counting as complete
         if (sessionType.value === 'focus') {
-            if ((completedPomodoros.value + 1) % config.value.pomodorosUntilLongBreak === 0) {
+            // Don't increment completedPomodoros — skipped sessions don't count
+            // Use current count to determine next break type
+            if ((completedPomodoros.value) % config.value.pomodorosUntilLongBreak === (config.value.pomodorosUntilLongBreak - 1)) {
                 sessionType.value = 'long-break'
             } else {
                 sessionType.value = 'short-break'
@@ -173,23 +206,43 @@ export function useTimer(
         }
 
         remaining.value = sessionDuration.value
+        persistState()
     }
 
     const setSessionType = (type: SessionType) => {
         stop()
         sessionType.value = type
         remaining.value = sessionDuration.value
+        persistState()
+    }
+
+    // Resume timer if it was running when the page was closed/refreshed
+    if (savedState?.isRunning && savedState.endTime) {
+        const now = Date.now()
+        if (savedState.endTime > now) {
+            // Timer still has time left — resume it
+            remaining.value = Math.max(0, Math.round((savedState.endTime - now) / 1000))
+            endTime.value = savedState.endTime
+            isRunning.value = true
+            intervalId = window.setInterval(tick, 250)
+        } else {
+            // Timer expired while page was closed — trigger completion
+            remaining.value = 0
+            completeSession()
+        }
     }
 
     // Watch for config changes
     watch(config, () => {
         if (!isRunning.value) {
             remaining.value = sessionDuration.value
+            persistState()
         }
     }, { deep: true })
 
     // Cleanup on unmount
     onUnmounted(() => {
+        persistState()
         stop()
     })
 

@@ -12,6 +12,7 @@
           @click="toggleTheme"
           class="theme-toggle"
           :title="`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`"
+          :aria-label="`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`"
         >
           {{ theme === "dark" ? "☀️" : "🌙" }}
         </button>
@@ -19,6 +20,7 @@
           @click="showSettingsModal = true"
           class="settings-toggle"
           title="Settings"
+          aria-label="Settings"
         >
           ⚙️
         </button>
@@ -75,48 +77,11 @@
 
     <!-- Summary Modal -->
     <Teleport to="body">
-      <div
+      <SummaryModal
         v-if="showSummaryModal"
-        class="modal-overlay"
-        @click.self="showSummaryModal = false"
-      >
-        <div class="modal">
-          <div class="modal-header">
-            <h2>Today's Summary</h2>
-            <button class="modal-close" @click="showSummaryModal = false">
-              &times;
-            </button>
-          </div>
-          <div class="modal-body">
-            <div class="summary-stat">
-              <span class="summary-value">{{ todayStats.focusCount }}</span>
-              <span class="summary-label">Focus Sessions</span>
-            </div>
-            <div class="summary-stat">
-              <span class="summary-value">{{
-                todayStats.totalFocusMinutes
-              }}</span>
-              <span class="summary-label">Minutes Focused</span>
-            </div>
-            <div class="summary-stat">
-              <span class="summary-value">{{ todayStats.breakCount }}</span>
-              <span class="summary-label">Breaks Taken</span>
-            </div>
-            <div
-              v-if="todayStats.labelBreakdown.length > 0"
-              class="summary-breakdown"
-            >
-              <h3>By Label</h3>
-              <ul>
-                <li v-for="item in todayStats.labelBreakdown" :key="item.label">
-                  <span class="breakdown-label">{{ item.label }}</span>
-                  <span class="breakdown-count">{{ item.count }}</span>
-                </li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      </div>
+        :stats="todayStats"
+        @close="showSummaryModal = false"
+      />
 
       <!-- Settings Modal -->
       <div
@@ -127,7 +92,11 @@
         <div class="modal modal-settings">
           <div class="modal-header">
             <h2>⚙️ Settings</h2>
-            <button class="modal-close" @click="showSettingsModal = false">
+            <button
+              class="modal-close"
+              aria-label="Close"
+              @click="showSettingsModal = false"
+            >
               &times;
             </button>
           </div>
@@ -163,7 +132,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted, onUnmounted } from "vue";
+import { ref, watch } from "vue";
 import {
   TimerDisplay,
   TimerControls,
@@ -171,6 +140,7 @@ import {
   StatsPanel,
   SettingsPanel,
   KanbanPanel,
+  SummaryModal,
 } from "./components";
 import {
   useTimer,
@@ -182,6 +152,7 @@ import {
   useFavicon,
   useWakeLock,
   useKanban,
+  useKeyboardShortcuts,
   defaultConfig,
   clearAllStorage,
   type TimerConfig,
@@ -229,6 +200,11 @@ const config = useStorage<TimerConfig>("timer-config", defaultConfig);
 // Track session start time for history
 let sessionStartTime = 0;
 
+// Called when a session auto-starts (after break or focus)
+const onSessionStart = () => {
+  sessionStartTime = Date.now();
+};
+
 // Handle session completion
 const onSessionComplete = (completedSessionType: SessionType) => {
   // Record to history - use active task title as label if kanban is enabled
@@ -241,8 +217,8 @@ const onSessionComplete = (completedSessionType: SessionType) => {
     completedSessionType === "focus"
       ? config.value.focusDuration * 60
       : completedSessionType === "short-break"
-      ? config.value.shortBreakDuration * 60
-      : config.value.longBreakDuration * 60;
+        ? config.value.shortBreakDuration * 60
+        : config.value.longBreakDuration * 60;
 
   recordSession(completedSessionType, currentLabel, duration, sessionStartTime);
 
@@ -281,7 +257,7 @@ const {
   pause,
   skip,
   reset,
-} = useTimer(config, onSessionComplete);
+} = useTimer(config, onSessionComplete, onSessionStart);
 
 // Dynamic favicon
 useFavicon(progress, sessionType, remaining, isRunning);
@@ -289,7 +265,7 @@ useFavicon(progress, sessionType, remaining, isRunning);
 // Wake lock
 const { isSupported: wakeLockSupported } = useWakeLock(
   isRunning,
-  wakeLockEnabled
+  wakeLockEnabled,
 );
 
 // Request notification permission on first start
@@ -328,53 +304,30 @@ const handleClearData = () => {
     wakeLockEnabled.value = false;
     compactMode.value = false;
     kanbanEnabled.value = false;
+    urgencyWarningEnabled.value = true;
     config.value = { ...defaultConfig };
   }
 };
 
 // Keyboard shortcuts
-const handleKeyDown = (e: KeyboardEvent) => {
-  // Ignore if typing in an input
-  if (
-    e.target instanceof HTMLInputElement ||
-    e.target instanceof HTMLTextAreaElement
-  ) {
-    return;
-  }
-
-  switch (e.code) {
-    case "Space":
-      e.preventDefault();
+useKeyboardShortcuts(
+  {
+    toggleTimer: () => {
       if (isRunning.value) {
         pause();
       } else {
         handleStart();
       }
-      break;
-    case "KeyS":
-      if (!e.ctrlKey && !e.metaKey) {
-        skip();
-      }
-      break;
-    case "KeyR":
-      if (!e.ctrlKey && !e.metaKey) {
-        reset();
-      }
-      break;
-    case "Escape":
+    },
+    skip,
+    reset,
+    closeModals: () => {
       showSummaryModal.value = false;
       showSettingsModal.value = false;
-      break;
-  }
-};
-
-onMounted(() => {
-  document.addEventListener("keydown", handleKeyDown);
-});
-
-onUnmounted(() => {
-  document.removeEventListener("keydown", handleKeyDown);
-});
+    },
+  },
+  () => isRunning.value,
+);
 
 // Update document title with timer
 watch([formattedTime, sessionType], ([time, type]) => {
@@ -577,67 +530,6 @@ watch([formattedTime, sessionType], ([time, type]) => {
 .modal-body {
   padding: 1.5rem;
   overflow-y: auto;
-}
-
-.summary-stat {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 1rem;
-  margin-bottom: 1rem;
-  background: var(--bg-subtle);
-  border-radius: 8px;
-}
-
-.summary-value {
-  font-size: 2.5rem;
-  font-weight: 700;
-  color: var(--color-primary);
-  line-height: 1;
-}
-
-.summary-label {
-  font-size: 0.875rem;
-  color: var(--text-secondary);
-  margin-top: 0.25rem;
-}
-
-.summary-breakdown {
-  margin-top: 1rem;
-}
-
-.summary-breakdown h3 {
-  font-size: 0.875rem;
-  color: var(--text-secondary);
-  margin: 0 0 0.75rem 0;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.summary-breakdown ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.summary-breakdown li {
-  display: flex;
-  justify-content: space-between;
-  padding: 0.5rem 0;
-  border-bottom: 1px solid var(--border-color);
-}
-
-.summary-breakdown li:last-child {
-  border-bottom: none;
-}
-
-.breakdown-label {
-  color: var(--text-primary);
-}
-
-.breakdown-count {
-  color: var(--text-secondary);
-  font-weight: 600;
 }
 
 @media (max-width: 800px) {

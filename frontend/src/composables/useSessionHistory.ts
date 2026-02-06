@@ -16,7 +16,7 @@ export interface SessionHistory {
     lastCleared: number // timestamp
 }
 
-const MAX_ENTRIES = 100
+const MAX_ENTRIES = 500
 const STORAGE_KEY = 'session-history'
 
 export function useSessionHistory() {
@@ -33,6 +33,31 @@ export function useSessionHistory() {
 
         return history.value.entries.filter(
             (entry) => entry.completedAt >= todayStart
+        )
+    })
+
+    // Get this week's entries (Monday-based)
+    const weekEntries = computed(() => {
+        const now = new Date()
+        const day = now.getDay()
+        const diff = day === 0 ? 6 : day - 1 // Monday = 0
+        const monday = new Date(now)
+        monday.setDate(now.getDate() - diff)
+        monday.setHours(0, 0, 0, 0)
+        const weekStart = monday.getTime()
+
+        return history.value.entries.filter(
+            (entry) => entry.completedAt >= weekStart
+        )
+    })
+
+    // Get this month's entries
+    const monthEntries = computed(() => {
+        const now = new Date()
+        const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime()
+
+        return history.value.entries.filter(
+            (entry) => entry.completedAt >= monthStart
         )
     })
 
@@ -109,6 +134,8 @@ export function useSessionHistory() {
     return {
         history,
         todayEntries,
+        weekEntries,
+        monthEntries,
         todayStats,
         recordSession,
         clearHistory,

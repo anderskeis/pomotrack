@@ -8,6 +8,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from pathlib import Path
 
 from app.api.routes import router as api_router
+from app.config import settings
 
 
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
@@ -48,16 +49,10 @@ app.add_middleware(SecurityHeadersMiddleware)
 # CORS middleware - restricted for local use
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:7070",
-        "http://127.0.0.1:7070",
-        "http://192.168.0.158:7070",  # LAN access
-        "http://localhost:5173",  # Vite dev server
-        "http://127.0.0.1:5173",
-    ],
+    allow_origins=settings.get_cors_origins(),
     allow_credentials=False,  # Not needed for this app
     allow_methods=["GET"],  # Read-only API
-    allow_headers=["*"],
+    allow_headers=["Content-Type"],
 )
 
 # Include API routes

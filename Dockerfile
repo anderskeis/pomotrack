@@ -23,12 +23,9 @@ WORKDIR /app
 # Install uv for fast dependency management
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 
-# Install Python dependencies directly (no editable install needed in container)
-RUN uv pip install --system --no-cache \
-    "fastapi>=0.115.0" \
-    "uvicorn[standard]>=0.32.0" \
-    "pydantic>=2.0.0" \
-    "pydantic-settings>=2.0.0"
+# Copy pyproject.toml and install dependencies (cached layer)
+COPY backend/pyproject.toml ./
+RUN uv pip install --system --no-cache .
 
 # Copy backend code
 COPY backend/app ./app
