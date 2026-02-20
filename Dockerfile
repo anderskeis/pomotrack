@@ -33,9 +33,10 @@ COPY backend/app ./app
 # Copy built frontend to static directory
 COPY --from=frontend-builder /app/frontend/dist ./static
 
-# Create non-root user for security
+# Create non-root user for security and writable /data directory
 RUN useradd --create-home --shell /bin/bash --uid 1000 pomotrack && \
-    chown -R pomotrack:pomotrack /app
+    mkdir -p /data && \
+    chown -R pomotrack:pomotrack /app /data
 
 # Switch to non-root user
 USER pomotrack

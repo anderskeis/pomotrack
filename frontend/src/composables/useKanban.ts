@@ -1,127 +1,167 @@
-import { computed } from 'vue'
-import { useStorage } from './useStorage'
+import { computed, ref } from "vue";
+import * as kanbanApi from "../api/kanban";
 
-export type KanbanStatus = 'todo' | 'in-progress' | 'done'
+export type KanbanStatus = "todo" | "in-progress" | "done";
 
 export interface KanbanTask {
-    id: string
-    title: string
-    status: KanbanStatus
-    pomodorosCompleted: number
-    createdAt: number
-    completedAt?: number
+  id: string;
+  title: string;
+  status: KanbanStatus;
+  pomodorosCompleted: number;
+  createdAt: number;
+  completedAt?: number;
 }
 
 export interface KanbanState {
-    tasks: KanbanTask[]
+  tasks: KanbanTask[];
 }
 
-const defaultState: KanbanState = {
-    tasks: []
+// ---------------------------------------------------------------------------
+// Module-level singleton state
+// ---------------------------------------------------------------------------
+const _tasks = ref<KanbanTask[]>([]);
+const _loaded = ref(false);
+
+/** Re-fetch all tasks from the backend. Called on init and after a pull. */
+export async function refreshTasks(): Promise<void> {
+  try {
+    const data = await kanbanApi.fetchTasks();
+    _tasks.value = data;
+  } catch (e) {
+    console.error("[useKanban] Failed to load tasks:", e);
+  } finally {
+    _loaded.value = true;
+  }
 }
 
 export function useKanban() {
-    const state = useStorage<KanbanState>('kanban', defaultState)
+  if (!_loaded.value) {
+    refreshTasks();
+  }
 
-    // Get tasks by status
-    const todoTasks = computed(() => 
-        state.value.tasks.filter(t => t.status === 'todo')
-    )
-    
-    const inProgressTasks = computed(() => 
-        state.value.tasks.filter(t => t.status === 'in-progress')
-    )
-    
-    const doneTasks = computed(() => 
-        state.value.tasks.filter(t => t.status === 'done')
-    )
+  const todoTasks = computed(() =>
+    _tasks.value.filter((t) => t.status === "todo"),
+  );
+  const inProgressTasks = computed(() =>
+    _tasks.value.filter((t) => t.status === "in-progress"),
+  );
+  const doneTasks = computed(() =>
+    _tasks.value.filter((t) => t.status === "done"),
+  );
+  const activeTask = computed(
+    () => _tasks.value.find((t) => t.status === "in-progress") || null,
+  );
 
-    // The active task is the one currently in progress (only one allowed)
-    const activeTask = computed(() => 
-        state.value.tasks.find(t => t.status === 'in-progress') || null
-    )
+  const generateId = () =>
+    `task-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 
-    // Generate unique ID
-    const generateId = () => `task-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
+  const addTask = (title: string) => {
+    if (!title.trim()) return;
 
-    // Add a new task to todo
-    const addTask = (title: string) => {
-        if (!title.trim()) return
+    const newTask: KanbanTask = {
+      id: generateId(),
+      title: title.trim(),
+      status: "todo",
+      pomodorosCompleted: 0,
+      createdAt: Date.now(),
+    };
 
-        const newTask: KanbanTask = {
-            id: generateId(),
-            title: title.trim(),
-            status: 'todo',
-            pomodorosCompleted: 0,
-            createdAt: Date.now()
-        }
+    _tasks.value = [..._tasks.value, newTask];
+    kanbanApi
+      .createTask(newTask)
+      .catch((e) => console.error("[useKanban] Failed to create task:", e));
+  };
 
-        state.value.tasks.push(newTask)
-    }
+  const moveTask = (taskId: string, newStatus: KanbanStatus) => {
+    const task = _tasks.value.find((t) => t.id === taskId);
+    if (!task) return;
 
-    // Move a task to a new status
-    const moveTask = (taskId: string, newStatus: KanbanStatus) => {
-        const task = state.value.tasks.find(t => t.id === taskId)
-        if (!task) return
+    const updated: KanbanTask[] = _tasks.value.map((t) => {
+      // Bump existing in-progress back to todo
+      if (
+        newStatus === "in-progress" &&
+        t.status === "in-progress" &&
+        t.id !== taskId
+      ) {
+        const reverted = {
+          ...t,
+          status: "todo" as KanbanStatus,
+          completedAt: undefined,
+        };
+        kanbanApi
+          .updateTask(reverted)
+          .catch((e) => console.error("[useKanban] Failed to update task:", e));
+        return reverted;
+      }
+      if (t.id === taskId) {
+        const moved: KanbanTask = {
+          ...t,
+          status: newStatus,
+          completedAt: newStatus === "done" ? Date.now() : undefined,
+        };
+        kanbanApi
+          .updateTask(moved)
+          .catch((e) => console.error("[useKanban] Failed to update task:", e));
+        return moved;
+      }
+      return t;
+    });
 
-        // If moving to in-progress, first move any existing in-progress task back to todo
-        if (newStatus === 'in-progress') {
-            const currentInProgress = state.value.tasks.find(t => t.status === 'in-progress')
-            if (currentInProgress && currentInProgress.id !== taskId) {
-                currentInProgress.status = 'todo'
-            }
-        }
+    _tasks.value = updated;
+  };
 
-        task.status = newStatus
+  const deleteTask = (taskId: string) => {
+    _tasks.value = _tasks.value.filter((t) => t.id !== taskId);
+    kanbanApi
+      .deleteTask(taskId)
+      .catch((e) => console.error("[useKanban] Failed to delete task:", e));
+  };
 
-        // Set completedAt when moving to done
-        if (newStatus === 'done') {
-            task.completedAt = Date.now()
-        } else {
-            task.completedAt = undefined
-        }
-    }
+  const incrementActiveTaskPomodoros = () => {
+    const task = _tasks.value.find((t) => t.status === "in-progress");
+    if (!task) return;
+    const updated = {
+      ...task,
+      pomodorosCompleted: task.pomodorosCompleted + 1,
+    };
+    _tasks.value = _tasks.value.map((t) => (t.id === task.id ? updated : t));
+    kanbanApi
+      .updateTask(updated)
+      .catch((e) =>
+        console.error("[useKanban] Failed to increment pomodoros:", e),
+      );
+  };
 
-    // Delete a task
-    const deleteTask = (taskId: string) => {
-        const index = state.value.tasks.findIndex(t => t.id === taskId)
-        if (index !== -1) {
-            state.value.tasks.splice(index, 1)
-        }
-    }
+  const clearDoneTasks = () => {
+    const toDelete = _tasks.value.filter((t) => t.status === "done");
+    _tasks.value = _tasks.value.filter((t) => t.status !== "done");
+    toDelete.forEach((t) =>
+      kanbanApi
+        .deleteTask(t.id)
+        .catch((e) =>
+          console.error("[useKanban] Failed to delete done task:", e),
+        ),
+    );
+  };
 
-    // Increment pomodoros on the active (in-progress) task
-    const incrementActiveTaskPomodoros = () => {
-        const task = state.value.tasks.find(t => t.status === 'in-progress')
-        if (task) {
-            task.pomodorosCompleted++
-        }
-    }
+  const clearAllTasks = () => {
+    _tasks.value = [];
+    kanbanApi
+      .deleteAllTasks()
+      .catch((e) => console.error("[useKanban] Failed to clear tasks:", e));
+  };
 
-    // Clear all done tasks
-    const clearDoneTasks = () => {
-        state.value.tasks = state.value.tasks.filter(t => t.status !== 'done')
-    }
-
-    // Clear all tasks
-    const clearAllTasks = () => {
-        state.value.tasks = []
-    }
-
-    return {
-        // State
-        tasks: computed(() => state.value.tasks),
-        todoTasks,
-        inProgressTasks,
-        doneTasks,
-        activeTask,
-
-        // Actions
-        addTask,
-        moveTask,
-        deleteTask,
-        incrementActiveTaskPomodoros,
-        clearDoneTasks,
-        clearAllTasks
-    }
+  return {
+    tasks: computed(() => _tasks.value),
+    todoTasks,
+    inProgressTasks,
+    doneTasks,
+    activeTask,
+    addTask,
+    moveTask,
+    deleteTask,
+    incrementActiveTaskPomodoros,
+    clearDoneTasks,
+    clearAllTasks,
+  };
 }

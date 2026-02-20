@@ -1,14 +1,17 @@
 """FastAPI application entry point."""
 
+from contextlib import asynccontextmanager
+from pathlib import Path
+
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, Response
+from fastapi.staticfiles import StaticFiles
 from starlette.middleware.base import BaseHTTPMiddleware
-from pathlib import Path
 
 from app.api.routes import router as api_router
 from app.config import settings
+from app.database import create_db_and_tables
 
 
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
@@ -37,10 +40,18 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         return response
 
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Initialise database tables on startup."""
+    await create_db_and_tables()
+    yield
+
+
 app = FastAPI(
     title="Pomotrack",
     description="Single-user Pomodoro timer",
     version="1.0.0",
+    lifespan=lifespan,
 )
 
 # Security headers middleware
@@ -51,7 +62,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.get_cors_origins(),
     allow_credentials=False,  # Not needed for this app
-    allow_methods=["GET"],  # Read-only API
+    allow_methods=["GET", "POST", "PUT", "DELETE"],
     allow_headers=["Content-Type"],
 )
 

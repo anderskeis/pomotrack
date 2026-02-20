@@ -15,7 +15,7 @@
                 @change="
                   updateConfig(
                     'focusDuration',
-                    ($event.target as HTMLInputElement).valueAsNumber
+                    ($event.target as HTMLInputElement).valueAsNumber,
                   )
                 "
                 min="1"
@@ -36,7 +36,7 @@
                 @change="
                   updateConfig(
                     'shortBreakDuration',
-                    ($event.target as HTMLInputElement).valueAsNumber
+                    ($event.target as HTMLInputElement).valueAsNumber,
                   )
                 "
                 min="1"
@@ -57,7 +57,7 @@
                 @change="
                   updateConfig(
                     'longBreakDuration',
-                    ($event.target as HTMLInputElement).valueAsNumber
+                    ($event.target as HTMLInputElement).valueAsNumber,
                   )
                 "
                 min="1"
@@ -80,7 +80,7 @@
                 @change="
                   updateConfig(
                     'pomodorosUntilLongBreak',
-                    ($event.target as HTMLInputElement).valueAsNumber
+                    ($event.target as HTMLInputElement).valueAsNumber,
                   )
                 "
                 min="1"
@@ -101,7 +101,7 @@
                 @change="
                   updateConfig(
                     'dailyGoal',
-                    ($event.target as HTMLInputElement).valueAsNumber
+                    ($event.target as HTMLInputElement).valueAsNumber,
                   )
                 "
                 min="1"
@@ -234,6 +234,68 @@
       </div>
     </div>
 
+    <!-- Cloud Sync Section -->
+    <div class="cloud-sync-section">
+      <h3 class="panel-title">Cloud Sync (Azure Blob)</h3>
+      <p class="sync-hint">
+        Credentials are stored locally and sent to the backend only when you
+        sync.
+      </p>
+      <div class="sync-fields">
+        <div class="setting-item">
+          <label for="az-account" class="setting-label">Account Name</label>
+          <input
+            id="az-account"
+            type="text"
+            class="input sync-input"
+            :value="azureConfig.accountName"
+            placeholder="mystorageaccount"
+            autocomplete="off"
+            @input="
+              emit('updateAzureConfig', {
+                ...azureConfig,
+                accountName: ($event.target as HTMLInputElement).value,
+              })
+            "
+          />
+        </div>
+        <div class="setting-item">
+          <label for="az-container" class="setting-label">Container Name</label>
+          <input
+            id="az-container"
+            type="text"
+            class="input sync-input"
+            :value="azureConfig.containerName"
+            placeholder="pomotrack"
+            autocomplete="off"
+            @input="
+              emit('updateAzureConfig', {
+                ...azureConfig,
+                containerName: ($event.target as HTMLInputElement).value,
+              })
+            "
+          />
+        </div>
+        <div class="setting-item">
+          <label for="az-key" class="setting-label">Access Key</label>
+          <input
+            id="az-key"
+            type="password"
+            class="input sync-input"
+            :value="azureConfig.accountKey"
+            placeholder="••••••••"
+            autocomplete="off"
+            @input="
+              emit('updateAzureConfig', {
+                ...azureConfig,
+                accountKey: ($event.target as HTMLInputElement).value,
+              })
+            "
+          />
+        </div>
+      </div>
+    </div>
+
     <div class="settings-footer">
       <button class="btn btn-danger" @click="$emit('clearData')">
         Reset All Data
@@ -244,7 +306,7 @@
 
 <script setup lang="ts">
 import { computed } from "vue";
-import type { TimerConfig, Theme } from "../composables";
+import type { TimerConfig, Theme, AzureConfig } from "../composables";
 
 const props = defineProps<{
   config: TimerConfig;
@@ -257,6 +319,7 @@ const props = defineProps<{
   compactMode: boolean;
   urgencyWarningEnabled: boolean;
   kanbanEnabled: boolean;
+  azureConfig: AzureConfig;
 }>();
 
 const emit = defineEmits<{
@@ -269,6 +332,7 @@ const emit = defineEmits<{
   toggleKanban: [];
   requestNotifications: [];
   clearData: [];
+  updateAzureConfig: [config: AzureConfig];
 }>();
 
 const updateConfig = (key: keyof TimerConfig, value: number) => {
@@ -430,6 +494,35 @@ const wakeLockButtonText = computed(() => {
 .btn-danger:hover {
   background: var(--color-primary);
   color: white;
+}
+
+.cloud-sync-section {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.sync-hint {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin: 0 0 0.75rem 0;
+}
+
+.sync-fields {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem 1rem;
+}
+
+.sync-input {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+@media (max-width: 600px) {
+  .sync-fields {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 500px) {

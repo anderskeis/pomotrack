@@ -8,6 +8,26 @@
         </h1>
       </div>
       <div class="header-right">
+        <template v-if="isConfigured">
+          <button
+            @click="handlePull"
+            class="sync-btn"
+            :disabled="isSyncing"
+            title="Pull from cloud (replace local data)"
+            aria-label="Pull from cloud"
+          >
+            {{ isSyncing ? "⏳" : "☁️↓" }}
+          </button>
+          <button
+            @click="handlePush"
+            class="sync-btn"
+            :disabled="isSyncing"
+            title="Push to cloud"
+            aria-label="Push to cloud"
+          >
+            {{ isSyncing ? "⏳" : "☁️↑" }}
+          </button>
+        </template>
         <button
           @click="toggleTheme"
           class="theme-toggle"
@@ -112,6 +132,7 @@
               :compactMode="compactMode"
               :urgencyWarningEnabled="urgencyWarningEnabled"
               :kanbanEnabled="kanbanEnabled"
+              :azureConfig="azureConfig"
               @update:config="config = $event"
               @toggleSound="soundEnabled = !soundEnabled"
               @toggleTheme="toggleTheme"
@@ -123,16 +144,31 @@
               "
               @toggleKanban="kanbanEnabled = !kanbanEnabled"
               @clearData="handleClearData"
+              @updateAzureConfig="azureConfig = $event"
             />
           </div>
         </div>
       </div>
     </Teleport>
+
+    <!-- Sync status toast -->
+    <Teleport to="body">
+      <Transition name="toast">
+        <div
+          v-if="syncStatus !== 'idle' && syncStatus !== 'syncing'"
+          class="sync-toast"
+          :class="syncStatus"
+          @click="clearSyncStatus"
+        >
+          {{ syncMessage }}
+        </div>
+      </Transition>
+    </Teleport>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from "vue";
+import { onMounted, ref, watch } from "vue";
 import {
   TimerDisplay,
   TimerControls,
@@ -153,11 +189,82 @@ import {
   useWakeLock,
   useKanban,
   useKeyboardShortcuts,
+  useAzureSync,
   defaultConfig,
   clearAllStorage,
   type TimerConfig,
   type SessionType,
 } from "./composables";
+import { batchPostSessions } from "./api/sessions";
+import { createTask as apiCreateTask } from "./api/kanban";
+
+// Azure sync
+const {
+  config: azureConfig,
+  isConfigured,
+  isSyncing,
+  status: syncStatus,
+  message: syncMessage,
+  push: syncPush,
+  pull: syncPull,
+  clearStatus: clearSyncStatus,
+} = useAzureSync();
+
+const handlePush = async () => {
+  await syncPush();
+};
+const handlePull = async () => {
+  await syncPull();
+};
+
+// One-time migration: move old localStorage session/kanban data to the backend
+onMounted(async () => {
+  const legacySessionsKey = "pomotrack-session-history";
+  const legacyKanbanKey = "pomotrack-kanban";
+
+  const rawSessions = localStorage.getItem(legacySessionsKey);
+  if (rawSessions) {
+    try {
+      const parsed = JSON.parse(rawSessions);
+      const entries = parsed?.data?.entries ?? parsed?.entries ?? [];
+      if (Array.isArray(entries) && entries.length > 0) {
+        await batchPostSessions(entries);
+        console.info(
+          `[migration] Migrated ${entries.length} sessions from localStorage`,
+        );
+      }
+    } catch (e) {
+      console.error("[migration] Failed to migrate sessions:", e);
+    }
+    localStorage.removeItem(legacySessionsKey);
+  }
+
+  const rawKanban = localStorage.getItem(legacyKanbanKey);
+  if (rawKanban) {
+    try {
+      const parsed = JSON.parse(rawKanban);
+      const tasks = parsed?.data?.tasks ?? parsed?.tasks ?? [];
+      if (Array.isArray(tasks) && tasks.length > 0) {
+        for (const task of tasks) {
+          await apiCreateTask(task);
+        }
+        console.info(
+          `[migration] Migrated ${tasks.length} kanban tasks from localStorage`,
+        );
+      }
+    } catch (e) {
+      console.error("[migration] Failed to migrate kanban tasks:", e);
+    }
+    localStorage.removeItem(legacyKanbanKey);
+  }
+
+  // Auto-dismiss sync status after 4 seconds
+  watch(syncStatus, (val) => {
+    if (val === "success" || val === "error") {
+      setTimeout(clearSyncStatus, 4000);
+    }
+  });
+});
 
 // Theme
 const { theme, toggleTheme } = useTheme();
@@ -399,6 +506,64 @@ watch([formattedTime, sessionType], ([time, type]) => {
 
 .settings-toggle:hover {
   background: var(--bg-subtle);
+}
+
+.sync-btn {
+  background: transparent;
+  border: none;
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 6px;
+  transition: background 0.15s ease;
+  line-height: 1;
+}
+
+.sync-btn:hover:not(:disabled) {
+  background: var(--bg-subtle);
+}
+
+.sync-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.sync-toast {
+  position: fixed;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 0.625rem 1.25rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  z-index: 2000;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+  white-space: nowrap;
+}
+
+.sync-toast.success {
+  background: #22c55e;
+  color: #fff;
+}
+
+.sync-toast.error {
+  background: #ef4444;
+  color: #fff;
+}
+
+.toast-enter-active,
+.toast-leave-active {
+  transition:
+    opacity 0.25s ease,
+    transform 0.25s ease;
+}
+
+.toast-enter-from,
+.toast-leave-to {
+  opacity: 0;
+  transform: translateX(-50%) translateY(8px);
 }
 
 .main {

@@ -32,7 +32,14 @@ A self-hosted, single-user Pomodoro timer that is simple to use and run and noth
 - 📋 Built-in task management with 3-column kanban (Todo → In Progress → Done)
 - 🖱️ Drag-and-drop tasks between columns
 - 🍅 Automatic pomodoro counting per task
-- 💾 Tasks persist locally in localStorage
+- 💾 Tasks and sessions persisted in SQLite (survives container restarts)
+
+### Cloud Sync (Optional)
+
+- ☁️ Manual push/pull sync to Azure Blob Storage
+- 🔄 Sync sessions and kanban tasks between multiple computers
+- 🔑 Azure credentials stored locally in the browser, never committed to source control
+- 🚀 Bootstrap a new machine by pulling from the cloud
 
 ### Interface
 
@@ -40,7 +47,7 @@ A self-hosted, single-user Pomodoro timer that is simple to use and run and noth
 - 📐 Compact mode for smaller displays
 - ⌨️ Keyboard shortcuts (Space, S, R, Escape)
 - 🔖 Dynamic favicon showing timer progress
-- 💾 Settings persist in localStorage
+- 💾 Settings and preferences persist in localStorage
 
 ## Quick Start
 
@@ -51,6 +58,8 @@ docker compose up -d
 ```
 
 Open http://localhost:8080 in your browser.
+
+Session history and kanban tasks are stored in a SQLite database in a named Docker volume (`pomotrack-data`). Data persists across container restarts and image updates.
 
 ### LAN Access
 
@@ -80,7 +89,7 @@ npm install
 npm run dev
 ```
 
-Open http://localhost:5173 for development (with hot reload).
+Open http://localhost:5173 for development (with hot reload). The Vite dev server proxies `/api` requests to the backend at port 7070.
 
 ## Keyboard Shortcuts
 
@@ -99,18 +108,26 @@ graph TD
 
     subgraph Browser ["User's Browser"]
         VueApp[Vue.js Frontend]
-        LocalStorage[(localStorage)]
+        LocalStorage[(localStorage\nSettings & Azure creds)]
     end
 
-    subgraph Server ["Docker Container (FastAPI)"]
+    subgraph Container ["Docker Container (FastAPI)"]
         API[API Routes]
         Static[Static File Server]
+        SQLite[(SQLite\n/data/pomotrack.db)]
+    end
+
+    subgraph Cloud ["Azure Blob Storage (Optional)"]
+        Blob[(pomotrack-sync.json)]
     end
 
     User -->|Interacts with| VueApp
 
-    VueApp -->|Reads/Writes Settings| LocalStorage
+    VueApp -->|Reads/Writes Settings & Credentials| LocalStorage
+    VueApp -->|Sessions & Tasks CRUD| API
     VueApp -->|Fetches Config| API
+    API -->|Persist| SQLite
+    API -->|Push / Pull| Blob
 
     Static -->|Serves App Bundle| VueApp
 ```
@@ -121,22 +138,28 @@ graph TD
 pomotrack/
 ├── backend/           # FastAPI backend
 │   └── app/
-│       ├── main.py    # App entry point & static file serving
-│       └── api/       # API routes (/health, /config)
+│       ├── main.py       # App entry point, static file serving & DB init
+│       ├── database.py   # Async SQLite engine & session dependency
+│       ├── models.py     # SQLModel table definitions
+│       └── api/
+│           └── routes.py # REST endpoints (sessions, kanban, sync)
 ├── frontend/          # Vue 3 + TypeScript frontend
 │   └── src/
+│       ├── api/           # Typed fetch wrappers (sessions, kanban, sync)
 │       ├── components/    # UI components
-│       └── composables/   # Timer logic, notifications, audio, storage
-├── Dockerfile         # Multi-stage build
-└── docker-compose.yml
+│       └── composables/   # Timer logic, storage, kanban, session history, sync
+├── Dockerfile         # Multi-stage build (Node + Python)
+└── docker-compose.yml # Single-container deployment with named data volume
 ```
 
 ## Design Decisions
 
 - **Timer runs in browser**: All timer state is client-side for simplicity and offline capability
-- **Settings persist**: Timer config, theme, and preferences saved in localStorage
-- **Session history**: Today's completed sessions stored locally for daily stats
-- **Single container**: Frontend is built and served by FastAPI
+- **Settings persist in localStorage**: Timer config, theme, and preferences stay in the browser
+- **Sessions & tasks in SQLite**: Stored server-side so data survives browser clears and is accessible from any client on the LAN
+- **Single container**: Frontend is built and served by FastAPI; the SQLite database lives in a named Docker volume at `/data/pomotrack.db`
+- **Optimistic UI updates**: The frontend updates local state immediately; API calls fire in the background
+- **Cloud sync is optional and manual**: Azure credentials are stored only in the browser's localStorage and are sent to the backend only when you initiate a push or pull — they are never stored server-side or committed to source control
 - **No authentication**: Designed for single-user, LAN-only deployment
 
 ## Configuration
@@ -174,6 +197,38 @@ Default timer settings (configurable via ⚙️ Settings):
 | Theme        | Dark    | Dark or Light mode                                |
 | Compact mode | Off     | Smaller timer for limited space                   |
 | Kanban board | Off     | Enable task kanban board (replaces session label) |
+
+## Cloud Sync
+
+Pomotrack can optionally sync session history and kanban tasks to Azure Blob Storage, allowing you to share data between multiple computers each running their own local Docker container.
+
+### Setup
+
+1. Create an Azure Storage account and a container (e.g. `pomotrack`)
+2. Obtain the storage account **Access Key** (not a SAS token) from the Azure portal
+3. Open the Pomotrack **Settings** panel → **Cloud Sync** section
+4. Enter your **Account Name**, **Container Name**, and **Access Key**
+
+Credentials are stored only in your browser's localStorage and are sent to the backend only when you push or pull.
+
+### Usage
+
+| Button | Action |
+| ------ | ------ |
+| ☁️↑ Push | Uploads all sessions and tasks as `pomotrack-sync.json` to Azure Blob |
+| ☁️↓ Pull | Downloads the blob, replaces all local data, and reloads the page |
+
+> **Note:** Pull overwrites all local data. Always push from the source machine before pulling on another.
+
+### Bootstrap a new machine
+
+On a fresh installation, enter your Azure credentials in Settings, then click **☁️↓ Pull** to restore all data from the cloud.
+
+### Security
+
+- Credentials are never stored server-side or written to disk
+- Sync traffic goes over HTTPS to Azure
+- The blob is private; access requires the account key
 
 ## Browser Support
 
