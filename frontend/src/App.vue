@@ -6,36 +6,54 @@
           <span class="logo-icon">🍅</span>
           Pomotrack
         </h1>
-      </div>
-      <div class="header-right">
         <template v-if="isConfigured">
           <button
             @click="handlePull"
             class="sync-btn"
             :disabled="isSyncing"
-            title="Pull from cloud — replaces local data"
-            aria-label="Pull from cloud"
+            title="Pull from Azure — replaces local data"
+            aria-label="Pull from Azure"
           >
             <!-- cloud-arrow-down (Heroicons mini 20x20) -->
-            <svg class="sync-icon" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-              <path fill-rule="evenodd" d="M5.5 17a4.5 4.5 0 0 1-1.44-8.765 4.5 4.5 0 0 1 8.302-3.046 3.5 3.5 0 0 1 4.504 4.272A4 4 0 0 1 15 17H5.5zm5.25-9.25a.75.75 0 0 0-1.5 0v4.59l-1.95-2.1a.75.75 0 1 0-1.1 1.02l3.25 3.5a.75.75 0 0 0 1.1 0l3.25-3.5a.75.75 0 1 0-1.1-1.02l-1.95 2.1V7.75z" clip-rule="evenodd" />
+            <svg
+              class="sync-icon"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+              aria-hidden="true"
+            >
+              <path
+                fill-rule="evenodd"
+                d="M5.5 17a4.5 4.5 0 0 1-1.44-8.765 4.5 4.5 0 0 1 8.302-3.046 3.5 3.5 0 0 1 4.504 4.272A4 4 0 0 1 15 17H5.5zm5.25-9.25a.75.75 0 0 0-1.5 0v4.59l-1.95-2.1a.75.75 0 1 0-1.1 1.02l3.25 3.5a.75.75 0 0 0 1.1 0l3.25-3.5a.75.75 0 1 0-1.1-1.02l-1.95 2.1V7.75z"
+                clip-rule="evenodd"
+              />
             </svg>
-            <span>{{ isSyncing ? '…' : 'Pull' }}</span>
+            <span>{{ isSyncing ? "…" : "Pull Azure" }}</span>
           </button>
           <button
             @click="handlePush"
             class="sync-btn"
             :disabled="isSyncing"
-            title="Push to cloud"
-            aria-label="Push to cloud"
+            title="Push to Azure"
+            aria-label="Push to Azure"
           >
             <!-- cloud-arrow-up (Heroicons mini 20x20) -->
-            <svg class="sync-icon" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-              <path fill-rule="evenodd" d="M5.5 17a4.5 4.5 0 0 1-1.44-8.765 4.5 4.5 0 0 1 8.302-3.046 3.5 3.5 0 0 1 4.504 4.272A4 4 0 0 1 15 17H5.5zm3.75-2.75a.75.75 0 0 0 1.5 0V9.66l1.95 2.1a.75.75 0 1 0 1.1-1.02l-3.25-3.5a.75.75 0 0 0-1.1 0L6.2 10.74a.75.75 0 1 0 1.1 1.02l1.95-2.1v4.59z" clip-rule="evenodd" />
+            <svg
+              class="sync-icon"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+              aria-hidden="true"
+            >
+              <path
+                fill-rule="evenodd"
+                d="M5.5 17a4.5 4.5 0 0 1-1.44-8.765 4.5 4.5 0 0 1 8.302-3.046 3.5 3.5 0 0 1 4.504 4.272A4 4 0 0 1 15 17H5.5zm3.75-2.75a.75.75 0 0 0 1.5 0V9.66l1.95 2.1a.75.75 0 1 0 1.1-1.02l-3.25-3.5a.75.75 0 0 0-1.1 0L6.2 10.74a.75.75 0 1 0 1.1 1.02l1.95-2.1v4.59z"
+                clip-rule="evenodd"
+              />
             </svg>
-            <span>{{ isSyncing ? '…' : 'Push' }}</span>
+            <span>{{ isSyncing ? "…" : "Push Azure" }}</span>
           </button>
         </template>
+      </div>
+      <div class="header-right">
         <button
           @click="toggleTheme"
           class="theme-toggle"
@@ -472,6 +490,7 @@ watch([formattedTime, sessionType], ([time, type]) => {
 .header-left {
   display: flex;
   align-items: center;
+  gap: 0.75rem;
 }
 
 .logo {
