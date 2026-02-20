@@ -13,10 +13,14 @@
             @click="handlePull"
             class="sync-btn"
             :disabled="isSyncing"
-            title="Pull from cloud (replace local data)"
+            title="Pull from cloud — replaces local data"
             aria-label="Pull from cloud"
           >
-            {{ isSyncing ? "⏳" : "☁️↓" }}
+            <!-- cloud-arrow-down (Heroicons mini 20x20) -->
+            <svg class="sync-icon" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+              <path fill-rule="evenodd" d="M5.5 17a4.5 4.5 0 0 1-1.44-8.765 4.5 4.5 0 0 1 8.302-3.046 3.5 3.5 0 0 1 4.504 4.272A4 4 0 0 1 15 17H5.5zm5.25-9.25a.75.75 0 0 0-1.5 0v4.59l-1.95-2.1a.75.75 0 1 0-1.1 1.02l3.25 3.5a.75.75 0 0 0 1.1 0l3.25-3.5a.75.75 0 1 0-1.1-1.02l-1.95 2.1V7.75z" clip-rule="evenodd" />
+            </svg>
+            <span>{{ isSyncing ? '…' : 'Pull' }}</span>
           </button>
           <button
             @click="handlePush"
@@ -25,7 +29,11 @@
             title="Push to cloud"
             aria-label="Push to cloud"
           >
-            {{ isSyncing ? "⏳" : "☁️↑" }}
+            <!-- cloud-arrow-up (Heroicons mini 20x20) -->
+            <svg class="sync-icon" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+              <path fill-rule="evenodd" d="M5.5 17a4.5 4.5 0 0 1-1.44-8.765 4.5 4.5 0 0 1 8.302-3.046 3.5 3.5 0 0 1 4.504 4.272A4 4 0 0 1 15 17H5.5zm3.75-2.75a.75.75 0 0 0 1.5 0V9.66l1.95 2.1a.75.75 0 1 0 1.1-1.02l-3.25-3.5a.75.75 0 0 0-1.1 0L6.2 10.74a.75.75 0 1 0 1.1 1.02l1.95-2.1v4.59z" clip-rule="evenodd" />
+            </svg>
+            <span>{{ isSyncing ? '…' : 'Push' }}</span>
           </button>
         </template>
         <button
@@ -509,18 +517,35 @@ watch([formattedTime, sessionType], ([time, type]) => {
 }
 
 .sync-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
   background: transparent;
-  border: none;
-  font-size: 1.1rem;
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  font-weight: 500;
   cursor: pointer;
-  padding: 0.5rem;
+  padding: 0.35rem 0.6rem;
   border-radius: 6px;
-  transition: background 0.15s ease;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease;
   line-height: 1;
+  white-space: nowrap;
+}
+
+.sync-icon {
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
 }
 
 .sync-btn:hover:not(:disabled) {
   background: var(--bg-subtle);
+  color: var(--text-primary);
+  border-color: var(--text-muted);
 }
 
 .sync-btn:disabled {

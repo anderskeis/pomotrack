@@ -213,10 +213,10 @@ Credentials are stored only in your browser's localStorage and are sent to the b
 
 ### Usage
 
-| Button | Action |
-| ------ | ------ |
+| Button   | Action                                                                |
+| -------- | --------------------------------------------------------------------- |
 | ☁️↑ Push | Uploads all sessions and tasks as `pomotrack-sync.json` to Azure Blob |
-| ☁️↓ Pull | Downloads the blob, replaces all local data, and reloads the page |
+| ☁️↓ Pull | Downloads the blob, replaces all local data, and reloads the page     |
 
 > **Note:** Pull overwrites all local data. Always push from the source machine before pulling on another.
 
