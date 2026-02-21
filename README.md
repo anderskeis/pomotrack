@@ -57,13 +57,13 @@ A self-hosted, single-user Pomodoro timer that is simple to use and run and noth
 docker compose up -d
 ```
 
-Open http://localhost:8080 in your browser.
+Open <http://localhost:8080> in your browser.
 
 Session history and kanban tasks are stored in a SQLite database in a named Docker volume (`pomotrack-data`). Data persists across container restarts and image updates.
 
 ### LAN Access
 
-To access from other devices on your network, the app listens on all interfaces. Access via your machine's IP address (e.g., http://192.168.1.100:8080).
+To access from other devices on your network, the app listens on all interfaces. Access via your machine's IP address (e.g., <http://192.168.1.100:8080>).
 
 ### Development Setup
 
@@ -89,7 +89,7 @@ npm install
 npm run dev
 ```
 
-Open http://localhost:5173 for development (with hot reload). The Vite dev server proxies `/api` requests to the backend at port 7070.
+Open <http://localhost:5173> for development (with hot reload). The Vite dev server proxies `/api` requests to the backend at port 7070.
 
 ## Keyboard Shortcuts
 
@@ -134,7 +134,7 @@ graph TD
 
 ### Project Structure
 
-```
+```text
 pomotrack/
 ├── backend/           # FastAPI backend
 │   └── app/
@@ -213,16 +213,16 @@ Credentials are stored only in your browser's localStorage and are sent to the b
 
 ### Usage
 
-| Button   | Action                                                                |
-| -------- | --------------------------------------------------------------------- |
-| ☁️↑ Push | Uploads all sessions and tasks as `pomotrack-sync.json` to Azure Blob |
-| ☁️↓ Pull | Downloads the blob, replaces all local data, and reloads the page     |
+| Button      | Action                                                                |
+| ----------- | --------------------------------------------------------------------- |
+| Push Azure  | Uploads all sessions and tasks as `pomotrack-sync.json` to Azure Blob |
+| Pull Azure  | Downloads the blob, replaces all local data, and reloads the page     |
 
-> **Note:** Pull overwrites all local data. Always push from the source machine before pulling on another.
+> **Note:** Pull overwrites all local data. The backend validates sync payload format/version before applying changes, and invalid payloads are rejected without modifying local data.
 
 ### Bootstrap a new machine
 
-On a fresh installation, enter your Azure credentials in Settings, then click **☁️↓ Pull** to restore all data from the cloud.
+On a fresh installation, enter your Azure credentials in Settings, then click **Pull Azure** to restore all data from the cloud.
 
 ### Security
 
