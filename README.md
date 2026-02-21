@@ -230,6 +230,17 @@ On a fresh installation, enter your Azure credentials in Settings, then click **
 - Sync traffic goes over HTTPS to Azure
 - The blob is private; access requires the account key
 
+## Recent Changes
+
+### 2026-02
+
+- Added SQLite-backed persistence for session history and kanban tasks (`/data/pomotrack.db` in Docker volume `pomotrack-data`)
+- Added optional manual Azure Blob sync with **Push Azure** and **Pull Azure** controls
+- Added one-time migration from legacy browser-only storage to backend persistence
+- Hardened cloud pull flow with payload validation and version checks before apply
+- Made sync import replacement transactional to avoid partial writes on errors
+- Added backend tests for sync push/pull and invalid payload handling
+
 ## Browser Support
 
 - Chrome/Edge (latest) - Full support including Wake Lock
