@@ -240,6 +240,13 @@ class PullResult(BaseModel):
     importedTasks: int
 
 
+class SyncPayload(BaseModel):
+    version: int
+    exportedAt: Optional[str] = None
+    sessions: list[SessionIn] = []
+    tasks: list[KanbanTaskIn] = []
+
+
 SYNC_BLOB_NAME = "pomotrack-sync.json"
 
 
@@ -333,41 +340,51 @@ async def pull_sync(
         ) from e
 
     try:
-        payload = json.loads(raw)
+        payload = SyncPayload.model_validate(json.loads(raw))
     except json.JSONDecodeError as e:
         raise HTTPException(status_code=422, detail="Invalid sync file format") from e
+    except Exception as e:
+        raise HTTPException(status_code=422, detail=f"Invalid sync payload: {e}") from e
 
-    await db.execute(delete(SessionRecord))
-    await db.execute(delete(KanbanTask))
+    if payload.version != 1:
+        raise HTTPException(status_code=422, detail="Unsupported sync payload version")
 
-    for s in payload.get("sessions", []):
-        await db.merge(
-            SessionRecord(
-                id=s["id"],
-                type=s["type"],
-                label=s.get("label", ""),
-                started_at=s["startedAt"],
-                completed_at=s["completedAt"],
-                duration=s["duration"],
-            )
-        )
+    try:
+        async with db.begin():
+            await db.execute(delete(SessionRecord))
+            await db.execute(delete(KanbanTask))
 
-    for t in payload.get("tasks", []):
-        await db.merge(
-            KanbanTask(
-                id=t["id"],
-                title=t["title"],
-                status=t["status"],
-                pomodoros_completed=t.get("pomodorosCompleted", 0),
-                created_at=t["createdAt"],
-                completed_at=t.get("completedAt"),
-            )
-        )
+            for s in payload.sessions:
+                await db.merge(
+                    SessionRecord(
+                        id=s.id,
+                        type=s.type,
+                        label=s.label,
+                        started_at=s.startedAt,
+                        completed_at=s.completedAt,
+                        duration=s.duration,
+                    )
+                )
 
-    await db.commit()
+            for t in payload.tasks:
+                await db.merge(
+                    KanbanTask(
+                        id=t.id,
+                        title=t.title,
+                        status=t.status,
+                        pomodoros_completed=t.pomodorosCompleted,
+                        created_at=t.createdAt,
+                        completed_at=t.completedAt,
+                    )
+                )
+    except HTTPException:
+        raise
+    except Exception as e:
+        await db.rollback()
+        raise HTTPException(status_code=500, detail=f"Failed to apply sync payload: {e}") from e
 
     return PullResult(
         ok=True,
-        importedSessions=len(payload.get("sessions", [])),
-        importedTasks=len(payload.get("tasks", [])),
+        importedSessions=len(payload.sessions),
+        importedTasks=len(payload.tasks),
     )

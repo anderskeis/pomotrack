@@ -250,6 +250,7 @@ onMounted(async () => {
 
   const rawSessions = localStorage.getItem(legacySessionsKey);
   if (rawSessions) {
+    let sessionsMigrated = false;
     try {
       const parsed = JSON.parse(rawSessions);
       const entries = parsed?.data?.entries ?? parsed?.entries ?? [];
@@ -259,14 +260,18 @@ onMounted(async () => {
           `[migration] Migrated ${entries.length} sessions from localStorage`,
         );
       }
+      sessionsMigrated = true;
     } catch (e) {
       console.error("[migration] Failed to migrate sessions:", e);
     }
-    localStorage.removeItem(legacySessionsKey);
+    if (sessionsMigrated) {
+      localStorage.removeItem(legacySessionsKey);
+    }
   }
 
   const rawKanban = localStorage.getItem(legacyKanbanKey);
   if (rawKanban) {
+    let kanbanMigrated = false;
     try {
       const parsed = JSON.parse(rawKanban);
       const tasks = parsed?.data?.tasks ?? parsed?.tasks ?? [];
@@ -278,10 +283,13 @@ onMounted(async () => {
           `[migration] Migrated ${tasks.length} kanban tasks from localStorage`,
         );
       }
+      kanbanMigrated = true;
     } catch (e) {
       console.error("[migration] Failed to migrate kanban tasks:", e);
     }
-    localStorage.removeItem(legacyKanbanKey);
+    if (kanbanMigrated) {
+      localStorage.removeItem(legacyKanbanKey);
+    }
   }
 
   // Auto-dismiss sync status after 4 seconds

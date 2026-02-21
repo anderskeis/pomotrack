@@ -1,10 +1,13 @@
 """Tests for the Pomotrack API."""
 
+import json
+
 import pytest
 from httpx import AsyncClient, ASGITransport
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlmodel import SQLModel
 
+import app.api.routes as routes_module
 from app.database import get_session
 from app.main import app
 
@@ -155,6 +158,33 @@ TASK_PAYLOAD = {
     "completedAt": None,
 }
 
+SYNC_CREDS = {
+    "accountName": "test-account",
+    "containerName": "test-container",
+    "accountKey": "test-key",
+}
+
+
+class _FakeDownload:
+    def __init__(self, data: bytes):
+        self._data = data
+
+    def readall(self) -> bytes:
+        return self._data
+
+
+class _FakeBlobClient:
+    def __init__(self):
+        self.uploaded_bytes: bytes | None = None
+        self.download_bytes: bytes = b"{}"
+
+    def upload_blob(self, data: bytes, overwrite: bool):
+        assert overwrite is True
+        self.uploaded_bytes = data
+
+    def download_blob(self):
+        return _FakeDownload(self.download_bytes)
+
 
 @pytest.mark.asyncio
 async def test_kanban_tasks_empty_initially(client):
@@ -205,3 +235,101 @@ async def test_delete_all_kanban_tasks(client):
     await client.delete("/api/kanban/tasks")
     response = await client.get("/api/kanban/tasks")
     assert response.json() == []
+
+
+# ---------------------------------------------------------------------------
+# Sync
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_sync_push_uploads_expected_payload(client, monkeypatch):
+    fake_blob = _FakeBlobClient()
+    monkeypatch.setattr(routes_module, "_build_blob_client", lambda _creds: fake_blob)
+
+    await client.post("/api/sessions", json=SESSION_PAYLOAD)
+    await client.post("/api/kanban/tasks", json=TASK_PAYLOAD)
+
+    response = await client.post("/api/sync/push", json=SYNC_CREDS)
+    assert response.status_code == 200
+    data = response.json()
+    assert data["ok"] is True
+    assert data["exportedSessions"] == 1
+    assert data["exportedTasks"] == 1
+
+    assert fake_blob.uploaded_bytes is not None
+    payload = json.loads(fake_blob.uploaded_bytes)
+    assert payload["version"] == 1
+    assert len(payload["sessions"]) == 1
+    assert len(payload["tasks"]) == 1
+
+
+@pytest.mark.asyncio
+async def test_sync_pull_replaces_local_data(client, monkeypatch):
+    fake_blob = _FakeBlobClient()
+    monkeypatch.setattr(routes_module, "_build_blob_client", lambda _creds: fake_blob)
+
+    await client.post("/api/sessions", json=SESSION_PAYLOAD)
+    await client.post("/api/kanban/tasks", json=TASK_PAYLOAD)
+
+    replacement = {
+        "version": 1,
+        "exportedAt": "2026-01-01T00:00:00Z",
+        "sessions": [
+            {
+                "id": "pulled-session",
+                "type": "focus",
+                "label": "Pulled",
+                "startedAt": 1700000100000,
+                "completedAt": 1700001600000,
+                "duration": 1500,
+            }
+        ],
+        "tasks": [
+            {
+                "id": "pulled-task",
+                "title": "Pulled Task",
+                "status": "todo",
+                "pomodorosCompleted": 0,
+                "createdAt": 1700000100000,
+                "completedAt": None,
+            }
+        ],
+    }
+    fake_blob.download_bytes = json.dumps(replacement).encode("utf-8")
+
+    response = await client.post("/api/sync/pull", json=SYNC_CREDS)
+    assert response.status_code == 200
+    assert response.json()["importedSessions"] == 1
+    assert response.json()["importedTasks"] == 1
+
+    sessions = (await client.get("/api/sessions")).json()
+    tasks = (await client.get("/api/kanban/tasks")).json()
+    assert [s["id"] for s in sessions] == ["pulled-session"]
+    assert [t["id"] for t in tasks] == ["pulled-task"]
+
+
+@pytest.mark.asyncio
+async def test_sync_pull_invalid_payload_does_not_modify_local_data(client, monkeypatch):
+    fake_blob = _FakeBlobClient()
+    monkeypatch.setattr(routes_module, "_build_blob_client", lambda _creds: fake_blob)
+
+    await client.post("/api/sessions", json=SESSION_PAYLOAD)
+    await client.post("/api/kanban/tasks", json=TASK_PAYLOAD)
+
+    invalid_payload = {
+        "version": 1,
+        "sessions": [{"id": "broken-session"}],
+        "tasks": [],
+    }
+    fake_blob.download_bytes = json.dumps(invalid_payload).encode("utf-8")
+
+    response = await client.post("/api/sync/pull", json=SYNC_CREDS)
+    assert response.status_code == 422
+
+    sessions = (await client.get("/api/sessions")).json()
+    tasks = (await client.get("/api/kanban/tasks")).json()
+    assert len(sessions) == 1
+    assert sessions[0]["id"] == SESSION_PAYLOAD["id"]
+    assert len(tasks) == 1
+    assert tasks[0]["id"] == TASK_PAYLOAD["id"]
