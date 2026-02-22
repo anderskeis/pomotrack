@@ -72,6 +72,10 @@ local_settings.py
 db.sqlite3
 db.sqlite3-journal
 
+# Local SQLite database files (defensive; covers custom POMOTRACK_DB_PATH in repo)
+*.db
+*.db-journal
+
 # Flask stuff:
 instance/
 .webassets-cache
