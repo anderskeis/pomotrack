@@ -9,6 +9,7 @@ A self-hosted, single-user Pomodoro timer that is simple to use and run and noth
 ### Timer
 
 - 🍅 Standard Pomodoro workflow (Focus → Short Break → Long Break)
+- ⭕ **Circular Progress Ring** around the countdown for clear visual progress
 - ⚙️ Configurable timer durations
 - 🔄 Auto-start next session (optional)
 - ⏭️ Skip or reset current session
@@ -17,6 +18,7 @@ A self-hosted, single-user Pomodoro timer that is simple to use and run and noth
 ### Notifications & Alerts
 
 - 🔔 Browser notifications on session completion
+- 🏆 **Daily Goal Celebrations**: celebratory browser notifications and screen alerts when your focus target is reached
 - 🔊 Audio alerts (bell sound)
 - 📱 Keep screen awake during timer (Wake Lock API)
 
@@ -25,7 +27,7 @@ A self-hosted, single-user Pomodoro timer that is simple to use and run and noth
 - 📊 Daily session statistics
 - 🎯 Daily goal progress tracking
 - 🏷️ Session labeling with presets and history
-- 📈 End-of-day summary modal
+- 📈 **Multi-Period Summary Modal**: view focus statistics across **Today**, **This Week**, and **This Month** using tabs
 
 ### Kanban Board (Optional)
 
@@ -44,6 +46,7 @@ A self-hosted, single-user Pomodoro timer that is simple to use and run and noth
 ### Interface
 
 - 🌙 Dark/Light theme toggle
+- 🖥️ **OS Theme Detection**: automatically adapts to your system's light or dark mode setting
 - 📐 Compact mode for smaller displays
 - ⌨️ Keyboard shortcuts (Space, S, R, Escape)
 - 🔖 Dynamic favicon showing timer progress
