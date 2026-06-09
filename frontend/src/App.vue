@@ -83,6 +83,7 @@
             :currentLabel="sessionLabel"
             :urgencyLevel="urgencyWarningEnabled ? urgencyLevel : 'normal'"
             :isRunning="isRunning"
+            :progress="progress"
           />
           <TimerControls
             :isRunning="isRunning"
@@ -125,7 +126,9 @@
     <Teleport to="body">
       <SummaryModal
         v-if="showSummaryModal"
-        :stats="todayStats"
+        :todayEntries="todayEntries"
+        :weekEntries="weekEntries"
+        :monthEntries="monthEntries"
         @close="showSummaryModal = false"
       />
 
@@ -187,6 +190,25 @@
           @click="clearSyncStatus"
         >
           {{ syncMessage }}
+        </div>
+      </Transition>
+    </Teleport>
+
+    <!-- Goal reached celebratory toast -->
+    <Teleport to="body">
+      <Transition name="toast">
+        <div
+          v-if="showGoalToast"
+          class="goal-toast"
+          @click="showGoalToast = false"
+        >
+          <div class="goal-toast-content">
+            <span class="goal-toast-icon">🏆</span>
+            <div class="goal-toast-text">
+              <h4>Daily Goal Reached!</h4>
+              <p>Outstanding! You've completed {{ config.dailyGoal }} pomodoros today. 🎉</p>
+            </div>
+          </div>
         </div>
       </Transition>
     </Teleport>
@@ -305,6 +327,7 @@ const { theme, toggleTheme } = useTheme();
 
 // Session label (ephemeral)
 const sessionLabel = ref("");
+const showGoalToast = ref(false);
 
 // Persisted settings
 const soundEnabled = useStorage("sound-enabled", true);
@@ -318,8 +341,15 @@ const kanbanEnabled = useStorage("kanban-enabled", false);
 const { activeTask, incrementActiveTaskPomodoros, clearAllTasks } = useKanban();
 
 // Session history
-const { todayStats, recordSession, recentLabels, clearHistory } =
-  useSessionHistory();
+const {
+  todayStats,
+  todayEntries,
+  weekEntries,
+  monthEntries,
+  recordSession,
+  recentLabels,
+  clearHistory,
+} = useSessionHistory();
 
 // Modals
 const showSummaryModal = ref(false);
@@ -333,6 +363,7 @@ const {
   permission: notificationPermission,
   requestPermission,
   notifySessionComplete,
+  notifyGoalReached,
 } = useNotifications();
 
 // Timer config - persisted
@@ -362,6 +393,17 @@ const onSessionComplete = (completedSessionType: SessionType) => {
         : config.value.longBreakDuration * 60;
 
   recordSession(completedSessionType, currentLabel, duration, sessionStartTime);
+
+  // Check if daily goal was reached (must check after recordSession has updated todayStats)
+  if (completedSessionType === "focus" && todayStats.value.focusCount === config.value.dailyGoal) {
+    if (notificationsEnabled.value) {
+      notifyGoalReached(config.value.dailyGoal);
+    }
+    showGoalToast.value = true;
+    setTimeout(() => {
+      showGoalToast.value = false;
+    }, 6000);
+  }
 
   // Increment pomodoro count on active kanban task
   if (completedSessionType === "focus" && kanbanEnabled.value) {
@@ -767,6 +809,79 @@ watch([formattedTime, sessionType], ([time, type]) => {
 
   .header {
     padding: 1rem;
+  }
+}
+
+/* Goal reached celebratory toast */
+.goal-toast {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  padding: 1rem 1.5rem;
+  background: linear-gradient(135deg, #f59e0b, #ef4444);
+  color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(239, 68, 68, 0.4);
+  cursor: pointer;
+  z-index: 2000;
+  max-width: 350px;
+  animation: slide-in 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.goal-toast-content {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.goal-toast-icon {
+  font-size: 2.25rem;
+  animation: bounce 1s infinite alternate;
+}
+
+.goal-toast-text h4 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #ffffff;
+}
+
+.goal-toast-text p {
+  margin: 0.25rem 0 0 0;
+  font-size: 0.8125rem;
+  opacity: 0.95;
+  line-height: 1.3;
+  color: #ffffff;
+}
+
+@keyframes slide-in {
+  from {
+    transform: translateY(20px) scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes bounce {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-6px);
+  }
+}
+
+@media (max-width: 640px) {
+  .goal-toast {
+    bottom: 1.5rem;
+    left: 50%;
+    transform: translateX(-50%) !important;
+    width: 90%;
+    max-width: 320px;
   }
 }
 </style>

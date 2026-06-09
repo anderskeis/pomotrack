@@ -27,6 +27,8 @@ export function useTheme() {
 
         if (stored && (stored === 'light' || stored === 'dark')) {
             theme.value = stored
+        } else if (typeof window !== 'undefined' && window.matchMedia) {
+            theme.value = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'
         } else {
             // Default to dark mode for this dashboard-style app
             theme.value = 'dark'

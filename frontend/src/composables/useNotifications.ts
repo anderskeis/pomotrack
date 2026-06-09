@@ -60,11 +60,18 @@ export function useNotifications() {
         return notify(title, { body })
     }
 
+    const notifyGoalReached = (goal: number) => {
+        return notify('🎉 Daily goal reached!', {
+            body: `Congratulations! You've completed your daily goal of ${goal} pomodoros today.`,
+        })
+    }
+
     return {
         permission,
         isSupported,
         requestPermission,
         notify,
         notifySessionComplete,
+        notifyGoalReached,
     }
 }

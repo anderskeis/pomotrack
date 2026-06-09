@@ -7,7 +7,8 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 from sqlmodel import SQLModel
 
 # Allow override via env var so tests can use :memory: or a temp path
-_DB_PATH = os.environ.get("POMOTRACK_DB_PATH", "/data/pomotrack.db")
+_default_path = "./pomotrack.db" if os.name == "nt" else "/data/pomotrack.db"
+_DB_PATH = os.environ.get("POMOTRACK_DB_PATH", _default_path)
 _DB_URL = f"sqlite+aiosqlite:///{_DB_PATH}"
 
 engine = create_async_engine(
