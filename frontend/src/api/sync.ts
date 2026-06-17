@@ -44,33 +44,11 @@ export interface PullRequest {
   conflictStrategy?: "keep_local" | "keep_cloud" | "keep_newer";
 }
 
-export interface SyncInfoRequest {
-  accountName: string;
-  containerName: string;
-  accountKey: string;
-}
-
 async function request<T>(path: string, body: unknown): Promise<T> {
   const res = await fetch(`${BASE}${path}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
-  });
-  if (!res.ok) {
-    const data = await res.json().catch(() => ({ detail: res.statusText }));
-    const detail = data?.detail ?? res.statusText;
-    throw new Error(
-      typeof detail === "string" ? detail : JSON.stringify(detail),
-    );
-  }
-  return res.json() as Promise<T>;
-}
-
-// GET request for sync/info and sync/pull/preview
-async function getRequest<T>(path: string, body: unknown): Promise<T> {
-  const res = await fetch(`${BASE}${path}?${new URLSearchParams(body as Record<string, string>)}`, {
-    method: "GET",
-    headers: { "Content-Type": "application/json" },
   });
   if (!res.ok) {
     const data = await res.json().catch(() => ({ detail: res.statusText }));

@@ -264,14 +264,12 @@ const {
   showConfirmation,
   preview,
   conflictStrategy,
-  setConflictStrategy,
   status: syncStatus,
   message: syncMessage,
   push: syncPush,
   pull: syncPull,
   confirmPull,
   cancelPull,
-  markUnsyncedChanges,
   clearStatus: clearSyncStatus,
 } = useAzureSync();
 
@@ -447,9 +445,6 @@ const onSessionComplete = (completedSessionType: SessionType) => {
   if (completedSessionType === "focus" && !kanbanEnabled.value) {
     sessionLabel.value = "";
   }
-  
-  // Mark that there are unsynced changes (for auto-sync)
-  markUnsyncedChanges();
 };
 
 // Timer
