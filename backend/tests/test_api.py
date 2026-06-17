@@ -333,3 +333,272 @@ async def test_sync_pull_invalid_payload_does_not_modify_local_data(client, monk
     assert sessions[0]["id"] == SESSION_PAYLOAD["id"]
     assert len(tasks) == 1
     assert tasks[0]["id"] == TASK_PAYLOAD["id"]
+
+
+# ---------------------------------------------------------------------------
+# Pull Merge Tests (new behavior)
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_sync_pull_merge_preserves_local_data(client, monkeypatch):
+    """Test that merge mode preserves local data and adds new cloud data."""
+    fake_blob = _FakeBlobClient()
+    monkeypatch.setattr(routes_module, "_build_blob_client", lambda _creds: fake_blob)
+
+    # Create local data
+    await client.post("/api/sessions", json=SESSION_PAYLOAD)
+    await client.post("/api/kanban/tasks", json=TASK_PAYLOAD)
+
+    # Create cloud data with overlapping and new items
+    cloud_payload = {
+        "version": 1,
+        "exportedAt": "2026-01-01T00:00:00Z",
+        "sessions": [
+            SESSION_PAYLOAD,  # Same ID as local
+            {
+                "id": "cloud-session",
+                "type": "focus",
+                "label": "Cloud Only",
+                "startedAt": 1700000200000,
+                "completedAt": 1700001700000,
+                "duration": 1500,
+            },
+        ],
+        "tasks": [
+            TASK_PAYLOAD,  # Same ID as local
+            {
+                "id": "cloud-task",
+                "title": "Cloud Task",
+                "status": "todo",
+                "pomodorosCompleted": 0,
+                "createdAt": 1700000200000,
+                "completedAt": None,
+            },
+        ],
+    }
+    fake_blob.download_bytes = json.dumps(cloud_payload).encode("utf-8")
+
+    # Pull with merge (default)
+    response = await client.post("/api/sync/pull", json=SYNC_CREDS)
+    assert response.status_code == 200
+    data = response.json()
+    assert data["ok"] is True
+    assert data["importedSessions"] == 1  # cloud-session
+    assert data["mergedSessions"] == 0  # keep_local strategy means no merge
+    assert data["conflicts"] == 1  # SESSION_PAYLOAD conflict
+
+    # Check that local data is preserved and cloud data is added
+    sessions = (await client.get("/api/sessions")).json()
+    tasks = (await client.get("/api/kanban/tasks")).json()
+    
+    session_ids = {s["id"] for s in sessions}
+    task_ids = {t["id"] for t in tasks}
+    
+    assert SESSION_PAYLOAD["id"] in session_ids  # Local preserved
+    assert "cloud-session" in session_ids  # Cloud added
+    assert TASK_PAYLOAD["id"] in task_ids  # Local preserved
+    assert "cloud-task" in task_ids  # Cloud added
+
+
+@pytest.mark.asyncio
+async def test_sync_pull_full_replace_mode(client, monkeypatch):
+    """Test that merge=false replaces all local data (original behavior)."""
+    fake_blob = _FakeBlobClient()
+    monkeypatch.setattr(routes_module, "_build_blob_client", lambda _creds: fake_blob)
+
+    # Create local data
+    await client.post("/api/sessions", json=SESSION_PAYLOAD)
+    await client.post("/api/kanban/tasks", json=TASK_PAYLOAD)
+
+    # Create cloud data
+    cloud_payload = {
+        "version": 1,
+        "exportedAt": "2026-01-01T00:00:00Z",
+        "sessions": [
+            {
+                "id": "cloud-session",
+                "type": "focus",
+                "label": "Cloud Only",
+                "startedAt": 1700000200000,
+                "completedAt": 1700001700000,
+                "duration": 1500,
+            },
+        ],
+        "tasks": [
+            {
+                "id": "cloud-task",
+                "title": "Cloud Task",
+                "status": "todo",
+                "pomodorosCompleted": 0,
+                "createdAt": 1700000200000,
+                "completedAt": None,
+            },
+        ],
+    }
+    fake_blob.download_bytes = json.dumps(cloud_payload).encode("utf-8")
+
+    # Pull with merge=false
+    response = await client.post(
+        "/api/sync/pull", 
+        json={**SYNC_CREDS, "merge": False}
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["ok"] is True
+    assert data["importedSessions"] == 1
+    assert data["importedTasks"] == 1
+
+    # Check that local data is replaced
+    sessions = (await client.get("/api/sessions")).json()
+    tasks = (await client.get("/api/kanban/tasks")).json()
+    
+    assert len(sessions) == 1
+    assert sessions[0]["id"] == "cloud-session"
+    assert len(tasks) == 1
+    assert tasks[0]["id"] == "cloud-task"
+
+
+@pytest.mark.asyncio
+async def test_sync_pull_preview(client, monkeypatch):
+    """Test that pull preview returns correct conflict analysis."""
+    fake_blob = _FakeBlobClient()
+    monkeypatch.setattr(routes_module, "_build_blob_client", lambda _creds: fake_blob)
+
+    # Create local data
+    await client.post("/api/sessions", json=SESSION_PAYLOAD)
+    await client.post("/api/kanban/tasks", json=TASK_PAYLOAD)
+
+    # Create cloud data with overlapping and new items
+    cloud_payload = {
+        "version": 1,
+        "exportedAt": "2026-01-01T00:00:00Z",
+        "sessions": [
+            SESSION_PAYLOAD,  # Same ID as local
+            {
+                "id": "cloud-session",
+                "type": "focus",
+                "label": "Cloud Only",
+                "startedAt": 1700000200000,
+                "completedAt": 1700001700000,
+                "duration": 1500,
+            },
+        ],
+        "tasks": [
+            {
+                "id": "cloud-task",
+                "title": "Cloud Task",
+                "status": "todo",
+                "pomodorosCompleted": 0,
+                "createdAt": 1700000200000,
+                "completedAt": None,
+            },
+        ],
+    }
+    fake_blob.download_bytes = json.dumps(cloud_payload).encode("utf-8")
+
+    # Call preview
+    response = await client.post("/api/sync/pull/preview", json=SYNC_CREDS)
+    assert response.status_code == 200
+    data = response.json()
+    assert data["ok"] is True
+    assert data["newSessions"] == 1  # cloud-session
+    assert data["updatedSessions"] == 1  # SESSION_PAYLOAD
+    assert data["newTasks"] == 1  # cloud-task
+    assert data["updatedTasks"] == 0  # No overlap
+    assert data["conflictCount"] == 1  # SESSION_PAYLOAD
+
+
+@pytest.mark.asyncio
+async def test_sync_pull_keep_cloud_strategy(client, monkeypatch):
+    """Test that keep_cloud strategy overwrites local with cloud data."""
+    fake_blob = _FakeBlobClient()
+    monkeypatch.setattr(routes_module, "_build_blob_client", lambda _creds: fake_blob)
+
+    # Create local data
+    await client.post("/api/sessions", json=SESSION_PAYLOAD)
+
+    # Create cloud data with same ID but different label
+    cloud_payload = {
+        "version": 1,
+        "exportedAt": "2026-01-01T00:00:00Z",
+        "sessions": [
+            {
+                "id": SESSION_PAYLOAD["id"],
+                "type": "focus",
+                "label": "Cloud Modified",
+                "startedAt": 1700000200000,
+                "completedAt": 1700001700000,
+                "duration": 1500,
+            },
+        ],
+        "tasks": [],
+    }
+    fake_blob.download_bytes = json.dumps(cloud_payload).encode("utf-8")
+
+    # Pull with keep_cloud strategy
+    response = await client.post(
+        "/api/sync/pull", 
+        json={**SYNC_CREDS, "merge": True, "conflictStrategy": "keep_cloud"}
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["ok"] is True
+    assert data["mergedSessions"] == 1
+
+    # Check that cloud data overwrote local
+    sessions = (await client.get("/api/sessions")).json()
+    assert len(sessions) == 1
+    assert sessions[0]["label"] == "Cloud Modified"
+
+
+@pytest.mark.asyncio
+async def test_sync_pull_keep_newer_strategy(client, monkeypatch):
+    """Test that keep_newer strategy keeps the most recent data."""
+    fake_blob = _FakeBlobClient()
+    monkeypatch.setattr(routes_module, "_build_blob_client", lambda _creds: fake_blob)
+
+    # Create local data with older timestamp
+    old_session = {
+        "id": "newer-test",
+        "type": "focus",
+        "label": "Local Old",
+        "startedAt": 1700000000000,
+        "completedAt": 1700000100000,  # Older
+        "duration": 1000,
+    }
+    await client.post("/api/sessions", json=old_session)
+
+    # Create cloud data with same ID but newer timestamp
+    cloud_payload = {
+        "version": 1,
+        "exportedAt": "2026-01-01T00:00:00Z",
+        "sessions": [
+            {
+                "id": "newer-test",
+                "type": "focus",
+                "label": "Cloud Newer",
+                "startedAt": 1700000200000,
+                "completedAt": 1700002000000,  # Newer
+                "duration": 1800,
+            },
+        ],
+        "tasks": [],
+    }
+    fake_blob.download_bytes = json.dumps(cloud_payload).encode("utf-8")
+
+    # Pull with keep_newer strategy
+    response = await client.post(
+        "/api/sync/pull", 
+        json={**SYNC_CREDS, "merge": True, "conflictStrategy": "keep_newer"}
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["ok"] is True
+    assert data["mergedSessions"] == 1
+
+    # Check that newer cloud data was kept
+    sessions = (await client.get("/api/sessions")).json()
+    assert len(sessions) == 1
+    assert sessions[0]["label"] == "Cloud Newer"
+    assert sessions[0]["completedAt"] == 1700002000000

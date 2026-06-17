@@ -1,255 +1,288 @@
 # Pomotrack
 
-A self-hosted, single-user Pomodoro timer that is simple to use and run and nothing more.
+A self-hosted, single-user Pomodoro timer — simple to use, simple to run.
 
-> ⚠️ **Security Notice:** This application is designed for **local/LAN use only**. It has no authentication and should **not be exposed to the public internet**. If you need remote access, place it behind a VPN or authenticated reverse proxy.
+> ⚠️ **Security Notice:** LAN-only. No authentication. Do **not** expose to the public internet. Use a VPN or authenticated reverse proxy for remote access.
 
 ## Features
 
 ### Timer
-
-- 🍅 Standard Pomodoro workflow (Focus → Short Break → Long Break)
-- ⭕ **Circular Progress Ring** around the countdown for clear visual progress
-- ⚙️ Configurable timer durations
-- 🔄 Auto-start next session (optional)
-- ⏭️ Skip or reset current session
-- ⚠️ Visual urgency warnings (optional pulsing at 2min/30sec remaining)
+- 🍅 Standard Pomodoro: Focus → Short Break → Long Break
+- ⭕ Circular progress ring
+- ⚙️ Configurable durations
+- 🔄 Auto-start sessions
+- ⏭️ Skip / reset
+- ⚠️ Urgency warnings (2min/30s)
 
 ### Notifications & Alerts
-
-- 🔔 Browser notifications on session completion
-- 🏆 **Daily Goal Celebrations**: celebratory browser notifications and screen alerts when your focus target is reached
-- 🔊 Audio alerts (bell sound)
-- 📱 Keep screen awake during timer (Wake Lock API)
+- 🔔 Browser notifications
+- 🏆 Daily goal celebrations
+- 🔊 Audio alerts
+- 📱 Wake Lock (prevents screen sleep)
 
 ### Tracking & Stats
+- 📊 Daily statistics
+- 🎯 Goal progress tracking
+- 🏷️ Session labeling
+- 📈 Multi-period summary (Today / Week / Month)
 
-- 📊 Daily session statistics
-- 🎯 Daily goal progress tracking
-- 🏷️ Session labeling with presets and history
-- 📈 **Multi-Period Summary Modal**: view focus statistics across **Today**, **This Week**, and **This Month** using tabs
-
-### Kanban Board (Optional)
-
-- 📋 Built-in task management with 3-column kanban (Todo → In Progress → Done)
-- 🖱️ Drag-and-drop tasks between columns
-- 🍅 Automatic pomodoro counting per task
-- 💾 Tasks and sessions persisted in SQLite (survives container restarts)
+### Kanban (Optional)
+- 📋 3-column board (Todo → In Progress → Done)
+- 🖱️ Drag-and-drop
+- 🍅 Automatic pomodoro counting
+- 💾 SQLite persistence
 
 ### Cloud Sync (Optional)
-
-- ☁️ Manual push/pull sync to Azure Blob Storage
-- 🔄 Sync sessions and kanban tasks between multiple computers
-- 🔑 Azure credentials stored locally in the browser, never committed to source control
-- 🚀 Bootstrap a new machine by pulling from the cloud
+- ☁️ Push/pull to Azure Blob Storage
+- 🔄 Sync between multiple machines
+- 🔐 Credentials stored in browser only
+- 🚀 Bootstrap new machines
 
 ### Interface
-
-- 🌙 Dark/Light theme toggle
-- 🖥️ **OS Theme Detection**: automatically adapts to your system's light or dark mode setting
-- 📐 Compact mode for smaller displays
+- 🌙 Dark/Light theme + OS detection
+- 📐 Compact mode
 - ⌨️ Keyboard shortcuts (Space, S, R, Escape)
-- 🔖 Dynamic favicon showing timer progress
-- 💾 Settings and preferences persist in localStorage
+- 🔖 Dynamic favicon
+- 💾 Settings persist in localStorage
 
 ## Quick Start
 
-### Using Docker Compose (Recommended)
-
+### Docker Compose
 ```bash
 docker compose up -d
 ```
-
-Open <http://localhost:8080> in your browser.
-
-Session history and kanban tasks are stored in a SQLite database in a named Docker volume (`pomotrack-data`). Data persists across container restarts and image updates.
+Open <http://localhost:8080>. Data persists in `pomotrack-data` volume.
 
 ### LAN Access
+Access via your machine's IP (e.g., <http://192.168.1.100:8080>).
 
-To access from other devices on your network, the app listens on all interfaces. Access via your machine's IP address (e.g., <http://192.168.1.100:8080>).
-
-### Development Setup
-
-**Prerequisites:**
-
-- Python 3.11+
-- Node.js 20+
-- uv (Python package manager)
-
-**Backend:**
+### Development
+**Prerequisites:** Python 3.11+, Node.js 20+, uv
 
 ```bash
+# Backend
 cd backend
 uv sync
 uv run uvicorn app.main:app --reload --port 7070
-```
 
-**Frontend:**
-
-```bash
+# Frontend
 cd frontend
 npm install
 npm run dev
 ```
-
-Open <http://localhost:5173> for development (with hot reload). The Vite dev server proxies `/api` requests to the backend at port 7070.
+Open <http://localhost:5173>. Vite proxies `/api` to backend at port 7070.
 
 ## Keyboard Shortcuts
-
-| Key      | Action                |
-| -------- | --------------------- |
-| `Space`  | Start/Pause timer     |
-| `S`      | Skip to next session  |
-| `R`      | Reset current session |
-| `Escape` | Close modals          |
+| Key | Action |
+|-----|--------|
+| `Space` | Start/Pause timer |
+| `S` | Skip session |
+| `R` | Reset session |
+| `Escape` | Close modals |
 
 ## Architecture
 
 ```mermaid
 graph TD
     User((User))
-
-    subgraph Browser ["User's Browser"]
-        VueApp[Vue.js Frontend]
-        LocalStorage[(localStorage\nSettings & Azure creds)]
+    
+    subgraph Browser[Browser]
+        Vue[Vue 3 Frontend]
+        LS[localStorage<br>Settings & Creds]
     end
-
-    subgraph Container ["Docker Container (FastAPI)"]
-        API[API Routes]
-        Static[Static File Server]
-        SQLite[(SQLite\n/data/pomotrack.db)]
+    
+    subgraph Container[Docker Container]
+        API[FastAPI<br>REST endpoints]
+        Static[Static Files]
+        DB[(SQLite<br>/data/pomotrack.db)]
     end
-
-    subgraph Cloud ["Azure Blob Storage (Optional)"]
-        Blob[(pomotrack-sync.json)]
+    
+    subgraph Azure[Azure Blob Storage]
+        Blob[pomotrack-sync.json]
     end
+    
+    User -->|Uses| Vue
+    Vue -->|Settings| LS
+    Vue -->|CRUD| API
+    API -->|Persist| DB
+    API -->|Sync| Blob
+    Static -->|Serves| Vue
+```
 
-    User -->|Interacts with| VueApp
+### Data Flow
 
-    VueApp -->|Reads/Writes Settings & Credentials| LocalStorage
-    VueApp -->|Sessions & Tasks CRUD| API
-    VueApp -->|Fetches Config| API
-    API -->|Persist| SQLite
-    API -->|Push / Pull| Blob
-
-    Static -->|Serves App Bundle| VueApp
+```mermaid
+sequenceDiagram
+    actor User
+    participant Frontend
+    participant Backend
+    participant SQLite
+    participant Azure
+    
+    User->>Frontend: Complete session
+    Frontend->>Backend: POST /api/sessions (persist)
+    Backend->>SQLite: Store session
+    SQLite-->>Backend: Confirm
+    Backend-->>Frontend: OK
+    Frontend->>Frontend: Mark unsynced
+    
+    User->>Frontend: Click "Push Azure"
+    Frontend->>Backend: POST /api/sync/push + creds
+    Backend->>Azure: Upload all data
+    Azure-->>Backend: Confirm
+    Backend-->>Frontend: Success
+    Frontend->>Frontend: Clear unsynced flag
+    
+    User->>Frontend: Click "Pull Azure"
+    Frontend->>Backend: POST /api/sync/pull/preview + creds
+    Backend->>Azure: Download
+    Backend-->>Frontend: Preview (5 new, 2 conflicts)
+    Frontend->>User: Show confirmation
+    User->>Frontend: Confirm with strategy
+    Frontend->>Backend: POST /api/sync/pull + strategy
+    Backend->>Azure: Download
+    Backend->>SQLite: Merge data
+    Backend-->>Frontend: Success
+    Frontend->>User: Reload page
 ```
 
 ### Project Structure
-
-```text
-pomotrack/
-├── backend/           # FastAPI backend
-│   └── app/
-│       ├── main.py       # App entry point, static file serving & DB init
-│       ├── database.py   # Async SQLite engine & session dependency
-│       ├── models.py     # SQLModel table definitions
-│       └── api/
-│           └── routes.py # REST endpoints (sessions, kanban, sync)
-├── frontend/          # Vue 3 + TypeScript frontend
-│   └── src/
-│       ├── api/           # Typed fetch wrappers (sessions, kanban, sync)
-│       ├── components/    # UI components
-│       └── composables/   # Timer logic, storage, kanban, session history, sync
-├── Dockerfile         # Multi-stage build (Node + Python)
-└── docker-compose.yml # Single-container deployment with named data volume
 ```
-
-## Design Decisions
-
-- **Timer runs in browser**: All timer state is client-side for simplicity and offline capability
-- **Settings persist in localStorage**: Timer config, theme, and preferences stay in the browser
-- **Sessions & tasks in SQLite**: Stored server-side so data survives browser clears and is accessible from any client on the LAN
-- **Single container**: Frontend is built and served by FastAPI; the SQLite database lives in a named Docker volume at `/data/pomotrack.db`
-- **Optimistic UI updates**: The frontend updates local state immediately; API calls fire in the background
-- **Cloud sync is optional and manual**: Azure credentials are stored only in the browser's localStorage and are sent to the backend only when you initiate a push or pull — they are never stored server-side or committed to source control
-- **No authentication**: Designed for single-user, LAN-only deployment
+pomotrack/
+├── backend/
+│   └── app/
+│       ├── main.py       # Entry point & static serving
+│       ├── database.py   # SQLite engine
+│       ├── models.py     # SQLModel tables
+│       └── api/
+│           └── routes.py # REST endpoints
+├── frontend/
+│   └── src/
+│       ├── api/          # Typed API wrappers
+│       ├── components/   # Vue components
+│       └── composables/  # Logic (timer, sync, storage)
+├── Dockerfile
+└── docker-compose.yml
+```
 
 ## Configuration
 
-Default timer settings (configurable via ⚙️ Settings):
+### Timer
+| Setting | Default | Description |
+|---------|---------|-------------|
+| Focus duration | 25 min | Focus session length |
+| Short break | 5 min | Short break length |
+| Long break | 15 min | Long break length |
+| Long break after | 4 🍅 | Pomodoros until long break |
+| Daily goal | 8 🍅 | Target pomodoros per day |
 
-| Setting          | Default | Description                |
-| ---------------- | ------- | -------------------------- |
-| Focus duration   | 25 min  | Length of focus sessions   |
-| Short break      | 5 min   | Length of short breaks     |
-| Long break       | 15 min  | Length of long breaks      |
-| Long break after | 4 🍅    | Pomodoros until long break |
-| Daily goal       | 8 🍅    | Target pomodoros per day   |
+### Behavior
+| Setting | Default | Description |
+|---------|---------|-------------|
+| Auto-start breaks | Off | Auto-start break after focus |
+| Auto-start focus | Off | Auto-start focus after break |
+| Keep screen on | Off | Prevent screen sleep |
 
-### Behavior Settings
+### Alerts
+| Setting | Default | Description |
+|---------|---------|-------------|
+| Sound | On | Play alert on session end |
+| Notifications | Off | Browser notifications |
+| Urgency warning | On | Visual pulse near end |
 
-| Setting           | Default | Description                           |
-| ----------------- | ------- | ------------------------------------- |
-| Auto-start breaks | Off     | Automatically start break after focus |
-| Auto-start focus  | Off     | Automatically start focus after break |
-| Keep screen on    | Off     | Prevent screen sleep during timer     |
-
-### Alert Settings
-
-| Setting         | Default | Description                   |
-| --------------- | ------- | ----------------------------- |
-| Sound           | On      | Play sound when session ends  |
-| Notifications   | Off     | Show browser notification     |
-| Urgency warning | On      | Visual pulse near session end |
-
-### Display Settings
-
-| Setting      | Default | Description                                       |
-| ------------ | ------- | ------------------------------------------------- |
-| Theme        | Dark    | Dark or Light mode                                |
-| Compact mode | Off     | Smaller timer for limited space                   |
-| Kanban board | Off     | Enable task kanban board (replaces session label) |
+### Display
+| Setting | Default | Description |
+|---------|---------|-------------|
+| Theme | Auto | Dark/Light (OS detection) |
+| Compact mode | Off | Smaller UI |
+| Kanban board | Off | Enable task board |
 
 ## Cloud Sync
 
-Pomotrack can optionally sync session history and kanban tasks to Azure Blob Storage, allowing you to share data between multiple computers each running their own local Docker container.
+Sync sessions and kanban tasks to Azure Blob Storage across multiple machines.
 
 ### Setup
+1. Create Azure Storage account + container
+2. Get Access Key from Azure portal
+3. Enter in Settings → Cloud Sync
 
-1. Create an Azure Storage account and a container (e.g. `pomotrack`)
-2. Obtain the storage account **Access Key** (not a SAS token) from the Azure portal
-3. Open the Pomotrack **Settings** panel → **Cloud Sync** section
-4. Enter your **Account Name**, **Container Name**, and **Access Key**
+### Pull Behavior
+Pull now **merges** by default (not replaces). Shows confirmation dialog with:
+- New sessions/tasks count
+- Updated items count  
+- Conflicts count
+- Conflict resolution strategy selector
 
-Credentials are stored only in your browser's localStorage and are sent to the backend only when you push or pull.
+**Conflict Strategies:**
+- `Keep local` (default): Preserve your local data
+- `Use cloud`: Overwrite with cloud data
+- `Keep newer`: Use most recent by timestamp
 
-### Usage
+> ⚠️ **Note:** Original replace-all behavior available via API with `merge=false`.
 
-| Button     | Action                                                                |
-| ---------- | --------------------------------------------------------------------- |
-| Push Azure | Uploads all sessions and tasks as `pomotrack-sync.json` to Azure Blob |
-| Pull Azure | Downloads the blob, replaces all local data, and reloads the page     |
+### Endpoints
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/sync/push` | Upload data to Azure |
+| POST | `/api/sync/pull` | Merge/import from Azure |
+| POST | `/api/sync/pull/preview` | Preview changes |
+| GET | `/api/sync/info` | Get metadata |
 
-> **Note:** Pull overwrites all local data. The backend validates sync payload format/version before applying changes, and invalid payloads are rejected without modifying local data.
+### Pull Request
+```json
+{
+  "accountName": "your-account",
+  "containerName": "container",
+  "accountKey": "key",
+  "merge": true,
+  "conflictStrategy": "keep_local"
+}
+```
 
-### Bootstrap a new machine
+### Pull Response
+```json
+{
+  "ok": true,
+  "importedSessions": 5,
+  "importedTasks": 2,
+  "mergedSessions": 1,
+  "mergedTasks": 0,
+  "conflicts": 1
+}
+```
 
-On a fresh installation, enter your Azure credentials in Settings, then click **Pull Azure** to restore all data from the cloud.
-
-### Security
-
-- Credentials are never stored server-side or written to disk
-- Sync traffic goes over HTTPS to Azure
-- The blob is private; access requires the account key
+## Design Decisions
+- **Client-side timer**: Works offline, no server dependency
+- **localStorage settings**: Theme, preferences persist in browser
+- **SQLite data**: Sessions/tasks survive browser clears, shared on LAN
+- **Single container**: Frontend + backend in one Docker container
+- **Optimistic UI**: Immediate UI updates, API calls in background
+- **Manual sync default**: Cloud sync is opt-in, manual by default
+- **No auth**: Single-user, LAN-only design
 
 ## Recent Changes
 
 ### 2026-02
+- SQLite persistence for sessions/kanban
+- Manual Azure Blob sync
+- Migration from localStorage to backend
+- Payload validation, transactional imports
+- Backend sync tests
 
-- Added SQLite-backed persistence for session history and kanban tasks (`/data/pomotrack.db` in Docker volume `pomotrack-data`)
-- Added optional manual Azure Blob sync with **Push Azure** and **Pull Azure** controls
-- Added one-time migration from legacy browser-only storage to backend persistence
-- Hardened cloud pull flow with payload validation and version checks before apply
-- Made sync import replacement transactional to avoid partial writes on errors
-- Added backend tests for sync push/pull and invalid payload handling
+### 2026-06
+- Pull merges by default (not replaces)
+- `/api/sync/pull/preview` endpoint
+- `/api/sync/info` endpoint
+- Conflict resolution: keep_local, keep_cloud, keep_newer
+- Pull confirmation dialog
+- Auto-sync capabilities
 
 ## Browser Support
-
-- Chrome/Edge (latest) - Full support including Wake Lock
-- Firefox (latest) - All features except Wake Lock
-- Safari (latest) - All features except Wake Lock
+| Browser | Support |
+|---------|---------|
+| Chrome/Edge | ✅ Full (including Wake Lock) |
+| Firefox | ✅ Full (no Wake Lock) |
+| Safari | ✅ Full (no Wake Lock) |
 
 ## License
-
 Do whatever you want with it.

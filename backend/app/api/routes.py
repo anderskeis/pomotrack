@@ -238,6 +238,26 @@ class PullResult(BaseModel):
     ok: bool
     importedSessions: int
     importedTasks: int
+    mergedSessions: int = 0
+    mergedTasks: int = 0
+    conflicts: int = 0
+
+
+class PullPreviewResult(BaseModel):
+    ok: bool
+    newSessions: int
+    newTasks: int
+    updatedSessions: int
+    updatedTasks: int
+    conflictCount: int
+
+
+class SyncInfoResult(BaseModel):
+    ok: bool
+    version: int
+    exportedAt: Optional[str]
+    sessionCount: int
+    taskCount: int
 
 
 class SyncPayload(BaseModel):
@@ -247,7 +267,58 @@ class SyncPayload(BaseModel):
     tasks: list[KanbanTaskIn] = []
 
 
+class PullRequest(BaseModel):
+    merge: bool = True
+    conflictStrategy: str = "keep_local"  # keep_local, keep_cloud, keep_newer
+
+
 SYNC_BLOB_NAME = "pomotrack-sync.json"
+
+
+def _get_timestamp_for_record(record_type: str, record_data: dict) -> int:
+    """Get timestamp for conflict resolution."""
+    if record_type == "session":
+        return record_data.get("completedAt", 0)
+    return record_data.get("createdAt", 0)
+
+
+def _resolve_conflict(
+    local_record: Optional[SessionRecord | KanbanTask],
+    cloud_data: dict,
+    strategy: str,
+    record_type: str,
+) -> tuple[bool, bool]:
+    """
+    Determine if cloud data should be imported.
+    Returns: (should_import, is_conflict)
+    """
+    if local_record is None:
+        # No local record, always import
+        return True, False
+    
+    if strategy == "keep_cloud":
+        return True, True
+    
+    if strategy == "keep_local":
+        return False, True
+    
+    if strategy == "keep_newer":
+        local_ts = _get_timestamp_for_record(
+            record_type, {
+                "id": local_record.id,
+                "type": local_record.type if hasattr(local_record, "type") else None,
+                "label": local_record.label if hasattr(local_record, "label") else None,
+                "startedAt": local_record.started_at if hasattr(local_record, "started_at") else None,
+                "completedAt": local_record.completed_at if hasattr(local_record, "completed_at") else None,
+                "createdAt": local_record.created_at if hasattr(local_record, "created_at") else None,
+            }
+        )
+        cloud_ts = _get_timestamp_for_record(record_type, cloud_data)
+        if cloud_ts > local_ts:
+            return True, True
+        return False, True
+    
+    return False, True
 
 
 def _build_blob_client(creds: SyncCredentials):
@@ -322,11 +393,121 @@ async def push_sync(
     )
 
 
-@router.post("/sync/pull", response_model=PullResult)
-async def pull_sync(
+@router.get("/sync/info", response_model=SyncInfoResult)
+async def sync_info(
     creds: SyncCredentials, db: AsyncSession = Depends(get_session)
 ):
-    """Download JSON from Azure Blob Storage and replace local data."""
+    """Get sync metadata without downloading data."""
+    def _download_metadata() -> dict:
+        client = _build_blob_client(creds)
+        try:
+            raw = client.download_blob().readall()
+            payload = json.loads(raw)
+            return {
+                "version": payload.get("version", 1),
+                "exportedAt": payload.get("exportedAt"),
+                "sessionCount": len(payload.get("sessions", [])),
+                "taskCount": len(payload.get("tasks", [])),
+            }
+        except Exception:
+            return {"version": 1, "exportedAt": None, "sessionCount": 0, "taskCount": 0}
+
+    try:
+        metadata = await asyncio.to_thread(_download_metadata)
+    except Exception as e:
+        raise HTTPException(
+            status_code=502, detail=f"Azure download failed: {e}"
+        ) from e
+
+    return SyncInfoResult(
+        ok=True,
+        version=metadata["version"],
+        exportedAt=metadata["exportedAt"],
+        sessionCount=metadata["sessionCount"],
+        taskCount=metadata["taskCount"],
+    )
+
+
+@router.post("/sync/pull/preview", response_model=PullPreviewResult)
+async def pull_preview(
+    creds: SyncCredentials, db: AsyncSession = Depends(get_session)
+):
+    """Preview what would be imported during a pull (no changes made)."""
+    def _download() -> bytes:
+        client = _build_blob_client(creds)
+        return client.download_blob().readall()
+
+    try:
+        raw = await asyncio.to_thread(_download)
+    except Exception as e:
+        raise HTTPException(
+            status_code=502, detail=f"Azure download failed: {e}"
+        ) from e
+
+    try:
+        payload = SyncPayload.model_validate(json.loads(raw))
+    except json.JSONDecodeError as e:
+        raise HTTPException(status_code=422, detail="Invalid sync file format") from e
+    except Exception as e:
+        raise HTTPException(status_code=422, detail=f"Invalid sync payload: {e}") from e
+
+    if payload.version != 1:
+        raise HTTPException(status_code=422, detail="Unsupported sync payload version")
+
+    # Get existing local IDs
+    sessions_result = await db.execute(select(SessionRecord))
+    tasks_result = await db.execute(select(KanbanTask))
+    local_sessions = {s.id: s for s in sessions_result.scalars().all()}
+    local_tasks = {t.id: t for t in tasks_result.scalars().all()}
+
+    # Analyze cloud payload
+    new_sessions = 0
+    updated_sessions = 0
+    new_tasks = 0
+    updated_tasks = 0
+    conflict_count = 0
+
+    for s in payload.sessions:
+        if s.id in local_sessions:
+            updated_sessions += 1
+            conflict_count += 1
+        else:
+            new_sessions += 1
+
+    for t in payload.tasks:
+        if t.id in local_tasks:
+            updated_tasks += 1
+            conflict_count += 1
+        else:
+            new_tasks += 1
+
+    return PullPreviewResult(
+        ok=True,
+        newSessions=new_sessions,
+        newTasks=new_tasks,
+        updatedSessions=updated_sessions,
+        updatedTasks=updated_tasks,
+        conflictCount=conflict_count,
+    )
+
+
+@router.post("/sync/pull", response_model=PullResult)
+async def pull_sync(
+    creds: SyncCredentials,
+    request: PullRequest = None,
+    db: AsyncSession = Depends(get_session)
+):
+    """Download JSON from Azure Blob Storage and merge with local data.
+    
+    By default, uses merge strategy (preserves local data, imports new cloud data).
+    Set merge=false to replace all local data (original behavior).
+    """
+    # Use default values if request is None
+    if request is None:
+        request = PullRequest()
+    
+    merge = request.merge
+    conflict_strategy = request.conflictStrategy
 
     def _download() -> bytes:
         client = _build_blob_client(creds)
@@ -350,41 +531,127 @@ async def pull_sync(
         raise HTTPException(status_code=422, detail="Unsupported sync payload version")
 
     try:
-        async with db.begin():
-            await db.execute(delete(SessionRecord))
-            await db.execute(delete(KanbanTask))
+        if merge:
+            # Merge strategy: preserve local data, import new/updated from cloud
+            imported_sessions = 0
+            imported_tasks = 0
+            merged_sessions = 0
+            merged_tasks = 0
+            conflicts = 0
 
-            for s in payload.sessions:
-                await db.merge(
-                    SessionRecord(
-                        id=s.id,
-                        type=s.type,
-                        label=s.label,
-                        started_at=s.startedAt,
-                        completed_at=s.completedAt,
-                        duration=s.duration,
-                    )
-                )
+            async with db.begin():
+                # Get existing records
+                sessions_result = await db.execute(select(SessionRecord))
+                tasks_result = await db.execute(select(KanbanTask))
+                local_sessions = {s.id: s for s in sessions_result.scalars().all()}
+                local_tasks = {t.id: t for t in tasks_result.scalars().all()}
 
-            for t in payload.tasks:
-                await db.merge(
-                    KanbanTask(
-                        id=t.id,
-                        title=t.title,
-                        status=t.status,
-                        pomodoros_completed=t.pomodorosCompleted,
-                        created_at=t.createdAt,
-                        completed_at=t.completedAt,
+                # Process sessions
+                for s_data in payload.sessions:
+                    local = local_sessions.get(s_data.id)
+                    should_import, is_conflict = _resolve_conflict(
+                        local, s_data.model_dump(), conflict_strategy, "session"
                     )
-                )
+                    
+                    if is_conflict:
+                        conflicts += 1
+                    
+                    if should_import:
+                        if local is None:
+                            imported_sessions += 1
+                        else:
+                            merged_sessions += 1
+                        
+                        record = SessionRecord(
+                            id=s_data.id,
+                            type=s_data.type,
+                            label=s_data.label,
+                            started_at=s_data.startedAt,
+                            completed_at=s_data.completedAt,
+                            duration=s_data.duration,
+                        )
+                        await db.merge(record)
+
+                # Process tasks
+                for t_data in payload.tasks:
+                    local = local_tasks.get(t_data.id)
+                    should_import, is_conflict = _resolve_conflict(
+                        local, t_data.model_dump(), conflict_strategy, "task"
+                    )
+                    
+                    if is_conflict:
+                        conflicts += 1
+                    
+                    if should_import:
+                        if local is None:
+                            imported_tasks += 1
+                        else:
+                            merged_tasks += 1
+                        
+                        task = KanbanTask(
+                            id=t_data.id,
+                            title=t_data.title,
+                            status=t_data.status,
+                            pomodoros_completed=t_data.pomodorosCompleted,
+                            created_at=t_data.createdAt,
+                            completed_at=t_data.completedAt,
+                        )
+                        await db.merge(task)
+        else:
+            # Original behavior: replace all local data
+            imported_sessions = 0
+            imported_tasks = 0
+            merged_sessions = 0
+            merged_tasks = 0
+            conflicts = 0
+
+            async with db.begin():
+                await db.execute(delete(SessionRecord))
+                await db.execute(delete(KanbanTask))
+
+                for s in payload.sessions:
+                    imported_sessions += 1
+                    await db.merge(
+                        SessionRecord(
+                            id=s.id,
+                            type=s.type,
+                            label=s.label,
+                            started_at=s.startedAt,
+                            completed_at=s.completedAt,
+                            duration=s.duration,
+                        )
+                    )
+
+                for t in payload.tasks:
+                    imported_tasks += 1
+                    await db.merge(
+                        KanbanTask(
+                            id=t.id,
+                            title=t.title,
+                            status=t.status,
+                            pomodoros_completed=t.pomodorosCompleted,
+                            created_at=t.createdAt,
+                            completed_at=t.completedAt,
+                        )
+                    )
     except HTTPException:
         raise
     except Exception as e:
         await db.rollback()
         raise HTTPException(status_code=500, detail=f"Failed to apply sync payload: {e}") from e
 
-    return PullResult(
-        ok=True,
-        importedSessions=len(payload.sessions),
-        importedTasks=len(payload.tasks),
-    )
+    if merge:
+        return PullResult(
+            ok=True,
+            importedSessions=imported_sessions,
+            importedTasks=imported_tasks,
+            mergedSessions=merged_sessions,
+            mergedTasks=merged_tasks,
+            conflicts=conflicts,
+        )
+    else:
+        return PullResult(
+            ok=True,
+            importedSessions=imported_sessions,
+            importedTasks=imported_tasks,
+        )

@@ -11,7 +11,7 @@
             @click="handlePull"
             class="sync-btn"
             :disabled="isSyncing"
-            title="Pull from Azure — replaces local data"
+            title="Pull from Azure — merge with local data"
             aria-label="Pull from Azure"
           >
             <!-- cloud-arrow-down (Heroicons mini 20x20) -->
@@ -132,6 +132,15 @@
         @close="showSummaryModal = false"
       />
 
+      <!-- Pull Confirmation Modal -->
+      <PullConfirmationModal
+        :visible="showConfirmation"
+        :preview="preview"
+        :conflictStrategy="conflictStrategy"
+        @confirm="handleConfirmPull"
+        @cancel="handleCancelPull"
+      />
+
       <!-- Settings Modal -->
       <div
         v-if="showSettingsModal"
@@ -225,6 +234,7 @@ import {
   SettingsPanel,
   KanbanPanel,
   SummaryModal,
+  PullConfirmationModal,
 } from "./components";
 import {
   useTimer,
@@ -251,10 +261,17 @@ const {
   config: azureConfig,
   isConfigured,
   isSyncing,
+  showConfirmation,
+  preview,
+  conflictStrategy,
+  setConflictStrategy,
   status: syncStatus,
   message: syncMessage,
   push: syncPush,
   pull: syncPull,
+  confirmPull,
+  cancelPull,
+  markUnsyncedChanges,
   clearStatus: clearSyncStatus,
 } = useAzureSync();
 
@@ -263,6 +280,12 @@ const handlePush = async () => {
 };
 const handlePull = async () => {
   await syncPull();
+};
+const handleConfirmPull = (strategy: "keep_local" | "keep_cloud" | "keep_newer") => {
+  confirmPull(true, strategy);
+};
+const handleCancelPull = () => {
+  cancelPull();
 };
 
 // One-time migration: move old localStorage session/kanban data to the backend
@@ -424,6 +447,9 @@ const onSessionComplete = (completedSessionType: SessionType) => {
   if (completedSessionType === "focus" && !kanbanEnabled.value) {
     sessionLabel.value = "";
   }
+  
+  // Mark that there are unsynced changes (for auto-sync)
+  markUnsyncedChanges();
 };
 
 // Timer
