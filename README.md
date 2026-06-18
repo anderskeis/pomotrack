@@ -17,7 +17,7 @@ A self-hosted, single-user Pomodoro timer — simple to use, simple to run.
 ### Notifications & Alerts
 - 🔔 Browser notifications
 - 🏆 Daily goal celebrations
-- 🔊 Audio alerts
+- 🔊 Audio alerts (bundled `/sounds/bell.wav` + synthesized fallback)
 - 📱 Wake Lock (prevents screen sleep)
 
 ### Tracking & Stats
@@ -35,6 +35,7 @@ A self-hosted, single-user Pomodoro timer — simple to use, simple to run.
 ### Cloud Sync (Optional)
 - ☁️ Push/pull to Azure Blob Storage
 - 🔄 Sync between multiple machines
+- 🤖 Optional auto-sync (startup pull + post-session push)
 - 🔐 Credentials stored in browser only
 - 🚀 Bootstrap new machines
 
@@ -205,6 +206,7 @@ Sync sessions and kanban tasks to Azure Blob Storage across multiple machines.
 1. Create Azure Storage account + container
 2. Get Access Key from Azure portal
 3. Enter in Settings → Cloud Sync
+4. Optional: enable Auto-sync (pull on startup, push after focus sessions)
 
 ### Pull Behavior
 Pull now **merges** by default (not replaces). Shows confirmation dialog with:
@@ -212,6 +214,8 @@ Pull now **merges** by default (not replaces). Shows confirmation dialog with:
 - Updated items count  
 - Conflicts count
 - Conflict resolution strategy selector
+
+Auto-sync uses silent pull on startup (`keep_local`) and shows a `Syncing...` toast.
 
 **Conflict Strategies:**
 - `Keep local` (default): Preserve your local data
@@ -275,7 +279,7 @@ Pull now **merges** by default (not replaces). Shows confirmation dialog with:
 - `/api/sync/info` endpoint
 - Conflict resolution: keep_local, keep_cloud, keep_newer
 - Pull confirmation dialog
-- Auto-sync capabilities
+- Auto-sync toggle (startup pull + post-focus push)
 
 ## Browser Support
 | Browser | Support |
