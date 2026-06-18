@@ -150,6 +150,29 @@ export function useAzureSync() {
     _message.value = "Pull cancelled";
   };
 
+  const silentPull = async () => {
+    if (!isConfigured.value) return;
+    _status.value = "syncing";
+    _message.value = "Syncing…";
+    try {
+      const result = await pullFromCloud(config.value as AzureCredentials, {
+        merge: true,
+        conflictStrategy: "keep_local",
+      });
+      const totalItems =
+        (result.importedSessions || 0) +
+        (result.importedTasks || 0) +
+        (result.mergedSessions || 0) +
+        (result.mergedTasks || 0);
+      _status.value = "success";
+      _message.value =
+        totalItems > 0 ? `Auto-pulled ${totalItems} items` : "Already up to date";
+    } catch (e: unknown) {
+      _status.value = "error";
+      _message.value = e instanceof Error ? e.message : "Auto-sync failed";
+    }
+  };
+
   const clearStatus = () => {
     _status.value = "idle";
     _message.value = "";
@@ -172,6 +195,7 @@ export function useAzureSync() {
     previewPull,
     confirmPull,
     cancelPull,
+    silentPull,
     clearStatus,
   };
 }

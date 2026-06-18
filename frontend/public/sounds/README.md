@@ -1,6 +1,9 @@
 # Sounds Directory
 
-Place your notification sound file here as `bell.mp3`.
+The app ships with a default `bell.wav` in this folder.
+
+If you want a custom sound, you can replace it with your own file and update
+the path in `frontend/src/App.vue`.
 
 ## Recommended Sources for Free Sound Effects
 
@@ -10,4 +13,5 @@ Place your notification sound file here as `bell.mp3`.
 
 ## Default Fallback
 
-If no `bell.mp3` is provided, the app will use a synthesized tone generated via the Web Audio API.
+If the sound file fails to load or autoplay is blocked, the app will use a
+synthesized tone generated via the Web Audio API.

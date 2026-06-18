@@ -294,6 +294,17 @@
           />
         </div>
       </div>
+      <div v-if="azureConfig.accountName && azureConfig.containerName && azureConfig.accountKey" class="setting-item" style="margin-top: 0.75rem;">
+        <label class="setting-label">Auto-sync</label>
+        <div class="setting-hint" style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 0.35rem;">Push after each session · Pull on startup</div>
+        <button
+          class="btn-toggle"
+          :class="{ active: autoSyncEnabled }"
+          @click="$emit('toggleAutoSync')"
+        >
+          {{ autoSyncEnabled ? '✓ On' : '✗ Off' }}
+        </button>
+      </div>
     </div>
 
     <div class="settings-footer">
@@ -320,6 +331,7 @@ const props = defineProps<{
   urgencyWarningEnabled: boolean;
   kanbanEnabled: boolean;
   azureConfig: AzureConfig;
+  autoSyncEnabled: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -333,6 +345,7 @@ const emit = defineEmits<{
   requestNotifications: [];
   clearData: [];
   updateAzureConfig: [config: AzureConfig];
+  toggleAutoSync: [];
 }>();
 
 const updateConfig = (key: keyof TimerConfig, value: number) => {

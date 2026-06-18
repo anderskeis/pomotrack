@@ -34,7 +34,7 @@ function createSynthesizedBell(): () => void {
     }
 }
 
-export function useAudio(src: string = '/sounds/bell.mp3') {
+export function useAudio(src: string = '/sounds/bell.wav') {
     const audio = ref<HTMLAudioElement | null>(null)
     const isLoaded = ref(false)
     const volume = ref(0.7)

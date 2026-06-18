@@ -227,6 +227,16 @@ class SyncCredentials(BaseModel):
     accountKey: str
 
 
+class PullRequest(BaseModel):
+    merge: bool = True
+    conflictStrategy: str = "keep_local"  # keep_local, keep_cloud, keep_newer
+
+
+class SyncPullRequest(SyncCredentials, PullRequest):
+    """Combined credentials + pull options for /sync/pull and /sync/pull/preview."""
+    pass
+
+
 class PushResult(BaseModel):
     ok: bool
     exportedSessions: int
@@ -265,11 +275,6 @@ class SyncPayload(BaseModel):
     exportedAt: Optional[str] = None
     sessions: list[SessionIn] = []
     tasks: list[KanbanTaskIn] = []
-
-
-class PullRequest(BaseModel):
-    merge: bool = True
-    conflictStrategy: str = "keep_local"  # keep_local, keep_cloud, keep_newer
 
 
 SYNC_BLOB_NAME = "pomotrack-sync.json"
@@ -316,8 +321,8 @@ def _resolve_conflict(
         cloud_ts = _get_timestamp_for_record(record_type, cloud_data)
         if cloud_ts > local_ts:
             return True, True
-        return False, True
-    
+        return False, False
+
     return False, True
 
 
@@ -430,11 +435,11 @@ async def sync_info(
 
 @router.post("/sync/pull/preview", response_model=PullPreviewResult)
 async def pull_preview(
-    creds: SyncCredentials, db: AsyncSession = Depends(get_session)
+    request: SyncPullRequest, db: AsyncSession = Depends(get_session)
 ):
     """Preview what would be imported during a pull (no changes made)."""
     def _download() -> bytes:
-        client = _build_blob_client(creds)
+        client = _build_blob_client(request)
         return client.download_blob().readall()
 
     try:
@@ -493,8 +498,7 @@ async def pull_preview(
 
 @router.post("/sync/pull", response_model=PullResult)
 async def pull_sync(
-    creds: SyncCredentials,
-    request: PullRequest = None,
+    request: SyncPullRequest,
     db: AsyncSession = Depends(get_session)
 ):
     """Download JSON from Azure Blob Storage and merge with local data.
@@ -502,15 +506,11 @@ async def pull_sync(
     By default, uses merge strategy (preserves local data, imports new cloud data).
     Set merge=false to replace all local data (original behavior).
     """
-    # Use default values if request is None
-    if request is None:
-        request = PullRequest()
-    
     merge = request.merge
     conflict_strategy = request.conflictStrategy
 
     def _download() -> bytes:
-        client = _build_blob_client(creds)
+        client = _build_blob_client(request)
         return client.download_blob().readall()
 
     try:

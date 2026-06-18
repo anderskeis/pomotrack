@@ -89,8 +89,8 @@
             :isRunning="isRunning"
             @start="handleStart"
             @pause="pause"
-            @skip="skip"
-            @reset="reset"
+            @skip="handleSkip"
+            @reset="handleReset"
           />
           <div class="keyboard-hint" v-if="!isRunning">
             <span class="hint">Press <kbd>Space</kbd> to start</span>
@@ -171,6 +171,7 @@
               :urgencyWarningEnabled="urgencyWarningEnabled"
               :kanbanEnabled="kanbanEnabled"
               :azureConfig="azureConfig"
+              :autoSyncEnabled="autoSyncEnabled"
               @update:config="config = $event"
               @toggleSound="soundEnabled = !soundEnabled"
               @toggleTheme="toggleTheme"
@@ -181,6 +182,7 @@
                 urgencyWarningEnabled = !urgencyWarningEnabled
               "
               @toggleKanban="kanbanEnabled = !kanbanEnabled"
+              @toggleAutoSync="autoSyncEnabled = !autoSyncEnabled"
               @clearData="handleClearData"
               @updateAzureConfig="azureConfig = $event"
             />
@@ -193,10 +195,10 @@
     <Teleport to="body">
       <Transition name="toast">
         <div
-          v-if="syncStatus !== 'idle' && syncStatus !== 'syncing'"
+          v-if="syncStatus !== 'idle'"
           class="sync-toast"
           :class="syncStatus"
-          @click="clearSyncStatus"
+          @click="syncStatus !== 'syncing' && clearSyncStatus()"
         >
           {{ syncMessage }}
         </div>
@@ -270,6 +272,7 @@ const {
   pull: syncPull,
   confirmPull,
   cancelPull,
+  silentPull,
   clearStatus: clearSyncStatus,
 } = useAzureSync();
 
@@ -341,6 +344,11 @@ onMounted(async () => {
       setTimeout(clearSyncStatus, 4000);
     }
   });
+
+  // Auto-pull on startup if enabled
+  if (autoSyncEnabled.value && isConfigured.value) {
+    silentPull();
+  }
 });
 
 // Theme
@@ -357,6 +365,7 @@ const wakeLockEnabled = useStorage("wake-lock-enabled", false);
 const compactMode = useStorage("compact-mode", false);
 const urgencyWarningEnabled = useStorage("urgency-warning-enabled", true);
 const kanbanEnabled = useStorage("kanban-enabled", false);
+const autoSyncEnabled = useStorage("auto-sync-enabled", false);
 
 // Kanban board
 const { activeTask, incrementActiveTaskPomodoros, clearAllTasks } = useKanban();
@@ -377,7 +386,7 @@ const showSummaryModal = ref(false);
 const showSettingsModal = ref(false);
 
 // Audio
-const audio = useAudio("/sounds/bell.mp3");
+const audio = useAudio("/sounds/bell.wav");
 
 // Notifications
 const {
@@ -392,10 +401,13 @@ const config = useStorage<TimerConfig>("timer-config", defaultConfig);
 
 // Track session start time for history
 let sessionStartTime = 0;
+// True once a session has been started (prevents overwriting startedAt on resume)
+let sessionInProgress = false;
 
 // Called when a session auto-starts (after break or focus)
 const onSessionStart = () => {
   sessionStartTime = Date.now();
+  sessionInProgress = true;
 };
 
 // Handle session completion
@@ -414,6 +426,12 @@ const onSessionComplete = (completedSessionType: SessionType) => {
         : config.value.longBreakDuration * 60;
 
   recordSession(completedSessionType, currentLabel, duration, sessionStartTime);
+  sessionInProgress = false;
+
+  // Auto-push after focus session if enabled
+  if (completedSessionType === "focus" && autoSyncEnabled.value && isConfigured.value) {
+    syncPush();
+  }
 
   // Check if daily goal was reached (must check after recordSession has updated todayStats)
   if (completedSessionType === "focus" && todayStats.value.focusCount === config.value.dailyGoal) {
@@ -474,8 +492,11 @@ const { isSupported: wakeLockSupported } = useWakeLock(
 
 // Request notification permission on first start
 const handleStart = async () => {
-  // Track session start time
-  sessionStartTime = Date.now();
+  // Only record start time when beginning a fresh session, not resuming after pause
+  if (!sessionInProgress) {
+    sessionStartTime = Date.now();
+    sessionInProgress = true;
+  }
 
   // Request notification permission if not yet requested
   if (notificationPermission.value === "default") {
@@ -513,6 +534,16 @@ const handleClearData = () => {
   }
 };
 
+const handleSkip = () => {
+  sessionInProgress = false;
+  skip();
+};
+
+const handleReset = () => {
+  sessionInProgress = false;
+  reset();
+};
+
 // Keyboard shortcuts
 useKeyboardShortcuts(
   {
@@ -523,8 +554,8 @@ useKeyboardShortcuts(
         handleStart();
       }
     },
-    skip,
-    reset,
+    skip: handleSkip,
+    reset: handleReset,
     closeModals: () => {
       showSummaryModal.value = false;
       showSettingsModal.value = false;
@@ -661,6 +692,12 @@ watch([formattedTime, sessionType], ([time, type]) => {
 .sync-toast.success {
   background: #22c55e;
   color: #fff;
+}
+
+.sync-toast.syncing {
+  background: var(--bg-secondary, #374151);
+  color: var(--text-primary);
+  cursor: default;
 }
 
 .sync-toast.error {

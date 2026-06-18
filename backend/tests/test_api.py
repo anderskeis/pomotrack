@@ -298,7 +298,7 @@ async def test_sync_pull_replaces_local_data(client, monkeypatch):
     }
     fake_blob.download_bytes = json.dumps(replacement).encode("utf-8")
 
-    response = await client.post("/api/sync/pull", json=SYNC_CREDS)
+    response = await client.post("/api/sync/pull", json={**SYNC_CREDS, "merge": False})
     assert response.status_code == 200
     assert response.json()["importedSessions"] == 1
     assert response.json()["importedTasks"] == 1
@@ -386,7 +386,7 @@ async def test_sync_pull_merge_preserves_local_data(client, monkeypatch):
     assert data["ok"] is True
     assert data["importedSessions"] == 1  # cloud-session
     assert data["mergedSessions"] == 0  # keep_local strategy means no merge
-    assert data["conflicts"] == 1  # SESSION_PAYLOAD conflict
+    assert data["conflicts"] == 2  # SESSION_PAYLOAD + TASK_PAYLOAD both conflict
 
     # Check that local data is preserved and cloud data is added
     sessions = (await client.get("/api/sessions")).json()
