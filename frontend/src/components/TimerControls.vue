@@ -48,8 +48,7 @@ defineEmits<{
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1rem;
-  padding: 1.5rem;
+  gap: 0.75rem;
 }
 
 .btn {
@@ -79,9 +78,9 @@ defineEmits<{
 }
 
 .btn-large {
-  padding: 1rem 3rem;
-  font-size: 1.25rem;
-  min-width: 180px;
+  padding: 0.7rem 2.25rem;
+  font-size: 1.1rem;
+  min-width: 160px;
 }
 
 .btn-primary {
@@ -117,5 +116,16 @@ defineEmits<{
 .secondary-controls {
   display: flex;
   gap: 0.75rem;
+}
+
+/* Compact mode */
+.compact-mode .timer-controls {
+  gap: 0.5rem;
+}
+
+.compact-mode .btn-large {
+  padding: 0.5rem 1.75rem;
+  font-size: 1rem;
+  min-width: 140px;
 }
 </style>

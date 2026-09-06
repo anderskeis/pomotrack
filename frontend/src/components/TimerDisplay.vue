@@ -87,7 +87,6 @@ const sessionLabel = computed(() => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 2rem;
   border-radius: 12px;
   background: var(--panel-bg);
   border: 1px solid var(--border-color);
@@ -100,7 +99,7 @@ const sessionLabel = computed(() => {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.25rem;
   font-size: 1.25rem;
   color: var(--text-secondary);
 }
@@ -117,12 +116,12 @@ const sessionLabel = computed(() => {
 
 .timer-circle-container {
   position: relative;
-  width: 280px;
-  height: 280px;
+  width: 240px;
+  height: 240px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 1.5rem 0;
+  margin: 0.75rem 0;
 }
 
 .progress-ring {
@@ -153,7 +152,7 @@ const sessionLabel = computed(() => {
 .time {
   position: relative;
   z-index: 1;
-  font-size: 5rem;
+  font-size: 4rem;
   font-weight: 700;
   font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
   letter-spacing: 0.02em;
@@ -162,7 +161,7 @@ const sessionLabel = computed(() => {
 }
 
 .session-info {
-  margin-top: 0.5rem;
+  margin-top: 0.25rem;
   min-height: 1.5rem;
 }
 
@@ -228,13 +227,21 @@ const sessionLabel = computed(() => {
 
 /* Compact mode support */
 .compact-mode .timer-circle-container {
-  width: 200px;
-  height: 200px;
-  margin: 0.5rem 0;
+  width: 180px;
+  height: 180px;
+  margin: 0.25rem 0;
 }
 
 .compact-mode .time {
-  font-size: 3.5rem;
+  font-size: 2.75rem;
+}
+
+.compact-mode .session-indicator {
+  font-size: 1rem;
+}
+
+.compact-mode .session-icon {
+  font-size: 1.15rem;
 }
 
 @media (max-width: 640px) {

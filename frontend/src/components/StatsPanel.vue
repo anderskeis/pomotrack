@@ -84,7 +84,7 @@ const goalPercent = computed(() => {
 
 <style scoped>
 .stats-panel {
-  padding: 1.25rem;
+  padding: 1rem;
   background: var(--panel-bg);
   border: 1px solid var(--border-color);
   border-radius: 8px;
@@ -102,14 +102,14 @@ const goalPercent = computed(() => {
 .stats-grid {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0.5rem;
 }
 
 .stat-item {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  padding: 0.5rem;
+  padding: 0.375rem;
   background: var(--bg-subtle);
   border-radius: 6px;
 }
@@ -126,7 +126,7 @@ const goalPercent = computed(() => {
 }
 
 .stat-value {
-  font-size: 1.25rem;
+  font-size: 1.1rem;
   font-weight: 700;
   color: var(--text-primary);
   line-height: 1.2;
@@ -140,7 +140,7 @@ const goalPercent = computed(() => {
 .settings-divider {
   height: 1px;
   background: var(--border-color);
-  margin: 1rem 0;
+  margin: 0.625rem 0;
 }
 
 .goal-progress {
@@ -207,5 +207,22 @@ const goalPercent = computed(() => {
 .btn-summary:hover {
   background: var(--bg-input);
   color: var(--text-primary);
+}
+
+/* Compact mode */
+.compact-mode .stats-panel {
+  padding: 0.75rem;
+}
+
+.compact-mode .stat-item {
+  padding: 0.25rem;
+}
+
+.compact-mode .settings-divider {
+  margin: 0.375rem 0;
+}
+
+.compact-mode .btn-summary {
+  margin-top: 0.5rem;
 }
 </style>

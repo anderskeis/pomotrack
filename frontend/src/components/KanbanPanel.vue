@@ -310,6 +310,8 @@ const handleDrop = (event: DragEvent, status: KanbanStatus) => {
   flex-direction: column;
   gap: 0.375rem;
   min-height: 30px;
+  max-height: 160px;
+  overflow-y: auto;
 }
 
 .column-empty {
@@ -424,5 +426,23 @@ const handleDrop = (event: DragEvent, status: KanbanStatus) => {
 
 .column-done {
   border-left: 2px solid var(--color-secondary);
+}
+
+/* Compact mode */
+.compact-mode .kanban-columns {
+  gap: 0.5rem;
+}
+
+.compact-mode .kanban-column {
+  padding: 0.375rem;
+}
+
+.compact-mode .column-tasks {
+  gap: 0.25rem;
+  max-height: 120px;
+}
+
+.compact-mode .task-card {
+  padding: 0.3rem 0.5rem;
 }
 </style>

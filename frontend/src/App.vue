@@ -584,7 +584,7 @@ watch([formattedTime, sessionType], ([time, type]) => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1rem 2rem;
+  padding: 0.625rem 1.5rem;
   background: var(--header-bg);
   border-bottom: 1px solid var(--border-color);
 }
@@ -720,7 +720,7 @@ watch([formattedTime, sessionType], ([time, type]) => {
 
 .main {
   flex: 1;
-  padding: 2rem;
+  padding: 1rem 1.5rem;
 }
 
 .dashboard {
@@ -728,7 +728,7 @@ watch([formattedTime, sessionType], ([time, type]) => {
   margin: 0 auto;
   display: grid;
   grid-template-columns: 1fr 300px;
-  gap: 2rem;
+  gap: 1.25rem;
   align-items: start;
 }
 
@@ -736,8 +736,8 @@ watch([formattedTime, sessionType], ([time, type]) => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1.5rem;
-  padding: 2rem;
+  gap: 1rem;
+  padding: 1.25rem;
   background: var(--panel-bg);
   border: 1px solid var(--border-color);
   border-radius: 12px;
@@ -750,10 +750,10 @@ watch([formattedTime, sessionType], ([time, type]) => {
 }
 
 .footer {
-  padding: 1rem 2rem;
+  padding: 0.5rem 1.5rem;
   text-align: center;
   color: var(--text-muted);
-  font-size: 0.875rem;
+  font-size: 0.75rem;
   border-top: 1px solid var(--border-color);
 }
 
@@ -779,12 +779,25 @@ watch([formattedTime, sessionType], ([time, type]) => {
 }
 
 /* Compact mode */
-.compact-mode .timer-section {
-  padding: 1rem;
+.compact-mode .header {
+  padding: 0.375rem 1rem;
 }
 
-.compact-mode .time {
-  font-size: 5rem;
+.compact-mode .main {
+  padding: 0.5rem 1rem;
+}
+
+.compact-mode .dashboard {
+  gap: 0.75rem;
+}
+
+.compact-mode .timer-section {
+  padding: 0.75rem;
+  gap: 0.5rem;
+}
+
+.compact-mode .footer {
+  padding: 0.25rem 1rem;
 }
 
 .compact-mode .sidebar {

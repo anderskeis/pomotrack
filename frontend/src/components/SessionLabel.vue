@@ -53,8 +53,8 @@ const allPresets = computed(() => {
 .session-label-input {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  padding: 1rem;
+  gap: 0.375rem;
+  padding: 0.75rem;
   background: var(--panel-bg);
   border: 1px solid var(--border-color);
   border-radius: 8px;
