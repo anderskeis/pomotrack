@@ -23,12 +23,15 @@ WORKDIR /app
 # Install uv for fast dependency management
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 
-# Copy pyproject.toml and install dependencies (cached layer)
-COPY backend/pyproject.toml ./
-RUN uv pip install --system --no-cache .
+# Copy dependency manifest and lockfile for reproducible installs
+COPY backend/pyproject.toml backend/uv.lock ./
 
-# Copy backend code
+# Install locked dependencies (cached layer)
+RUN uv sync --frozen --no-dev --no-install-project
+
+# Copy backend code and install the project itself
 COPY backend/app ./app
+RUN uv sync --frozen --no-dev
 
 # Copy built frontend to static directory
 COPY --from=frontend-builder /app/frontend/dist ./static
@@ -48,5 +51,5 @@ EXPOSE 7070
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:7070/api/health')" || exit 1
 
-# Run with uvicorn
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "7070"]
+# Run with uvicorn from the locked virtualenv
+CMD [".venv/bin/uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "7070"]
