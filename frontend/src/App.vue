@@ -60,7 +60,38 @@
           :title="`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`"
           :aria-label="`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`"
         >
-          {{ theme === "dark" ? "☀️" : "🌙" }}
+          <!-- sun (Heroicons mini 20x20) — shown in dark mode -->
+          <svg
+            v-if="theme === 'dark'"
+            class="header-icon"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+            aria-hidden="true"
+          >
+            <path d="M10 2C10.4142 2 10.75 2.33579 10.75 2.75V4.25C10.75 4.66421 10.4142 5 10 5C9.58579 5 9.25 4.66421 9.25 4.25V2.75C9.25 2.33579 9.58579 2 10 2Z" />
+            <path d="M10 15C10.4142 15 10.75 15.3358 10.75 15.75V17.25C10.75 17.6642 10.4142 18 10 18C9.58579 18 9.25 17.6642 9.25 17.25V15.75C9.25 15.3358 9.58579 15 10 15Z" />
+            <path d="M10 7C8.34315 7 7 8.34315 7 10C7 11.6569 8.34315 13 10 13C11.6569 13 13 11.6569 13 10C13 8.34315 11.6569 7 10 7Z" />
+            <path d="M15.6568 5.40386C15.9497 5.11096 15.9497 4.63609 15.6568 4.3432C15.3639 4.0503 14.889 4.0503 14.5961 4.3432L13.5355 5.40386C13.2426 5.69675 13.2426 6.17162 13.5355 6.46452C13.8284 6.75741 14.3032 6.75741 14.5961 6.46452L15.6568 5.40386Z" />
+            <path d="M6.46441 14.5962C6.7573 14.3034 6.7573 13.8285 6.46441 13.5356C6.17151 13.2427 5.69664 13.2427 5.40375 13.5356L4.34309 14.5962C4.05019 14.8891 4.05019 15.364 4.34309 15.6569C4.63598 15.9498 5.11085 15.9498 5.40375 15.6569L6.46441 14.5962Z" />
+            <path d="M18 10C18 10.4142 17.6642 10.75 17.25 10.75H15.75C15.3358 10.75 15 10.4142 15 10C15 9.58579 15.3358 9.25 15.75 9.25H17.25C17.6642 9.25 18 9.58579 18 10Z" />
+            <path d="M5 10C5 10.4142 4.66421 10.75 4.25 10.75H2.75C2.33579 10.75 2 10.4142 2 10C2 9.58579 2.33579 9.25 2.75 9.25H4.25C4.66421 9.25 5 9.58579 5 10Z" />
+            <path d="M14.596 15.6568C14.8889 15.9497 15.3638 15.9497 15.6567 15.6568C15.9496 15.3639 15.9496 14.889 15.6567 14.5961L14.596 13.5355C14.3031 13.2426 13.8283 13.2426 13.5354 13.5355C13.2425 13.8284 13.2425 14.3032 13.5354 14.5961L14.596 15.6568Z" />
+            <path d="M5.40363 6.46441C5.69653 6.7573 6.1714 6.7573 6.46429 6.46441C6.75719 6.17151 6.75719 5.69664 6.46429 5.40375L5.40363 4.34309C5.11074 4.05019 4.63587 4.05019 4.34297 4.34309C4.05008 4.63598 4.05008 5.11085 4.34297 5.40375L5.40363 6.46441Z" />
+          </svg>
+          <!-- moon (Heroicons mini 20x20) — shown in light mode -->
+          <svg
+            v-else
+            class="header-icon"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+            aria-hidden="true"
+          >
+            <path
+              fill-rule="evenodd"
+              clip-rule="evenodd"
+              d="M7.45519 2.00395C7.68518 2.18765 7.78646 2.4889 7.71414 2.77423C7.57443 3.32547 7.5 3.90348 7.5 4.49996C7.5 8.36595 10.634 11.5 14.5 11.5C15.6435 11.5 16.721 11.2263 17.6724 10.7417C17.9347 10.608 18.2509 10.6402 18.4809 10.8239C18.7109 11.0076 18.8122 11.3089 18.7399 11.5942C17.8069 15.2755 14.4725 18 10.5 18C5.80558 18 2 14.1944 2 9.49996C2 6.19139 3.89048 3.32567 6.64671 1.92168C6.909 1.78807 7.22519 1.82025 7.45519 2.00395Z"
+            />
+          </svg>
         </button>
         <button
           @click="showSettingsModal = true"
@@ -68,7 +99,19 @@
           title="Settings"
           aria-label="Settings"
         >
-          ⚙️
+          <!-- cog-6-tooth (Heroicons mini 20x20) -->
+          <svg
+            class="header-icon"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+            aria-hidden="true"
+          >
+            <path
+              fill-rule="evenodd"
+              clip-rule="evenodd"
+              d="M7.83922 1.80388C7.93271 1.33646 8.34312 1 8.81981 1H11.1802C11.6569 1 12.0673 1.33646 12.1608 1.80388L12.4913 3.45629C13.1956 3.72458 13.8454 4.10332 14.4196 4.57133L16.0179 4.03065C16.4694 3.8779 16.966 4.06509 17.2043 4.47791L18.3845 6.52207C18.6229 6.93489 18.5367 7.45855 18.1786 7.77322L16.9119 8.88645C16.9699 9.24909 17 9.62103 17 10C17 10.379 16.9699 10.7509 16.9119 11.1135L18.1786 12.2268C18.5367 12.5414 18.6229 13.0651 18.3845 13.4779L17.2043 15.5221C16.966 15.9349 16.4694 16.1221 16.0179 15.9693L14.4196 15.4287C13.8454 15.8967 13.1956 16.2754 12.4913 16.5437L12.1608 18.1961C12.0673 18.6635 11.6569 19 11.1802 19H8.81981C8.34312 19 7.93271 18.6635 7.83922 18.1961L7.50874 16.5437C6.80443 16.2754 6.1546 15.8967 5.58043 15.4287L3.98214 15.9694C3.5306 16.1221 3.03401 15.9349 2.79567 15.5221L1.61547 13.4779C1.37713 13.0651 1.4633 12.5415 1.82136 12.2268L3.08808 11.1135C3.03012 10.7509 3 10.379 3 10C3 9.62103 3.03012 9.2491 3.08808 8.88647L1.82136 7.77324C1.46331 7.45857 1.37713 6.93491 1.61547 6.52209L2.79567 4.47793C3.03401 4.06511 3.5306 3.87791 3.98214 4.03066L5.58042 4.57134C6.15459 4.10332 6.80442 3.72459 7.50874 3.45629L7.83922 1.80388ZM10 13C11.6569 13 13 11.6569 13 10C13 8.34315 11.6569 7 10 7C8.34315 7 7 8.34315 7 10C7 11.6569 8.34315 13 10 13Z"
+            />
+          </svg>
         </button>
       </div>
     </header>
@@ -84,6 +127,8 @@
             :urgencyLevel="urgencyWarningEnabled ? urgencyLevel : 'normal'"
             :isRunning="isRunning"
             :progress="progress"
+            :completedPomodoros="completedPomodoros"
+            :pomodorosUntilLongBreak="config.pomodorosUntilLongBreak"
           />
           <TimerControls
             :isRunning="isRunning"
@@ -139,6 +184,19 @@
         :conflictStrategy="conflictStrategy"
         @confirm="handleConfirmPull"
         @cancel="handleCancelPull"
+      />
+
+      <!-- Clear Data Confirmation Modal -->
+      <ConfirmModal
+        :visible="showClearConfirm"
+        title="⚠️ Clear All Data?"
+        message="This will permanently delete all your settings, session history and kanban tasks."
+        warning="This action cannot be undone."
+        confirm-label="Clear All Data"
+        cancel-label="Cancel"
+        danger
+        @confirm="confirmClearData"
+        @cancel="showClearConfirm = false"
       />
 
       <!-- Settings Modal -->
@@ -198,6 +256,7 @@
           v-if="syncStatus !== 'idle'"
           class="sync-toast"
           :class="syncStatus"
+          :role="syncStatus === 'error' ? 'alert' : 'status'"
           @click="syncStatus !== 'syncing' && clearSyncStatus()"
         >
           {{ syncMessage }}
@@ -211,6 +270,7 @@
         <div
           v-if="showGoalToast"
           class="goal-toast"
+          role="status"
           @click="showGoalToast = false"
         >
           <div class="goal-toast-content">
@@ -237,6 +297,7 @@ import {
   KanbanPanel,
   SummaryModal,
   PullConfirmationModal,
+  ConfirmModal,
 } from "./components";
 import {
   useTimer,
@@ -384,6 +445,7 @@ const {
 // Modals
 const showSummaryModal = ref(false);
 const showSettingsModal = ref(false);
+const showClearConfirm = ref(false);
 
 // Audio
 const audio = useAudio("/sounds/bell.wav");
@@ -517,21 +579,24 @@ const handleRequestNotifications = async () => {
   }
 };
 
-// Handle clear all data
+// Handle clear all data — show confirmation modal first
 const handleClearData = () => {
-  if (confirm("This will clear all settings and history. Are you sure?")) {
-    clearAllStorage();
-    clearHistory();
-    clearAllTasks();
-    // Reset local state
-    soundEnabled.value = true;
-    notificationsEnabled.value = false;
-    wakeLockEnabled.value = false;
-    compactMode.value = false;
-    kanbanEnabled.value = false;
-    urgencyWarningEnabled.value = true;
-    config.value = { ...defaultConfig };
-  }
+  showClearConfirm.value = true;
+};
+
+const confirmClearData = () => {
+  showClearConfirm.value = false;
+  clearAllStorage();
+  clearHistory();
+  clearAllTasks();
+  // Reset local state
+  soundEnabled.value = true;
+  notificationsEnabled.value = false;
+  wakeLockEnabled.value = false;
+  compactMode.value = false;
+  kanbanEnabled.value = false;
+  urgencyWarningEnabled.value = true;
+  config.value = { ...defaultConfig };
 };
 
 const handleSkip = () => {
@@ -559,6 +624,7 @@ useKeyboardShortcuts(
     closeModals: () => {
       showSummaryModal.value = false;
       showSettingsModal.value = false;
+      showClearConfirm.value = false;
     },
   },
   () => isRunning.value,
@@ -612,29 +678,37 @@ watch([formattedTime, sessionType], ([time, type]) => {
 .theme-toggle {
   background: transparent;
   border: none;
-  font-size: 1.25rem;
+  color: var(--text-secondary);
   cursor: pointer;
   padding: 0.5rem;
   border-radius: 6px;
-  transition: background 0.15s ease;
+  transition: background 0.15s ease, color 0.15s ease;
 }
 
 .theme-toggle:hover {
   background: var(--bg-subtle);
+  color: var(--text-primary);
 }
 
 .settings-toggle {
   background: transparent;
   border: none;
-  font-size: 1.25rem;
+  color: var(--text-secondary);
   cursor: pointer;
   padding: 0.5rem;
   border-radius: 6px;
-  transition: background 0.15s ease;
+  transition: background 0.15s ease, color 0.15s ease;
 }
 
 .settings-toggle:hover {
   background: var(--bg-subtle);
+  color: var(--text-primary);
+}
+
+.header-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  display: block;
 }
 
 .sync-btn {

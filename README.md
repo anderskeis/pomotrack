@@ -266,6 +266,12 @@ Auto-sync uses silent pull on startup (`keep_local`) and shows a `Syncing...` to
 
 ## Recent Changes
 
+### 2026-10
+- Pomodoro cycle dots on the timer (progress toward the long break)
+- Confirmation modal for "Clear all data" (replaces native `confirm()`)
+- SVG icons (Heroicons) for timer controls and header buttons
+- Toast accessibility (`role="status"`/`alert` for screen readers)
+
 ### 2026-02
 - SQLite persistence for sessions/kanban
 - Manual Azure Blob sync
