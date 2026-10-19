@@ -31,6 +31,14 @@
       <div class="time">{{ formattedTime }}</div>
     </div>
     <div class="session-info">
+      <div class="cycle-dots" role="img" :aria-label="cycleAriaLabel">
+        <span
+          v-for="(filled, i) in cycleDots"
+          :key="i"
+          class="cycle-dot"
+          :class="{ 'is-filled': filled, 'is-active': i === activeDotIndex }"
+        ></span>
+      </div>
       <span v-if="currentLabel" class="current-label">{{ currentLabel }}</span>
     </div>
   </div>
@@ -47,6 +55,8 @@ const props = defineProps<{
   urgencyLevel?: UrgencyLevel
   isRunning?: boolean
   progress?: number
+  completedPomodoros?: number
+  pomodorosUntilLongBreak?: number
 }>()
 
 const radius = 120
@@ -78,6 +88,31 @@ const sessionLabel = computed(() => {
     case 'short-break': return 'Short Break'
     case 'long-break': return 'Long Break'
   }
+})
+
+// Pomodoro cycle dots — progress toward the long break
+const cycleLength = computed(() => Math.max(1, props.pomodorosUntilLongBreak ?? 4))
+
+// Pomodoros completed within the current cycle (resets after each long break)
+const completedInCycle = computed(() => (props.completedPomodoros ?? 0) % cycleLength.value)
+
+const cycleDots = computed(() => {
+  // During a long break the whole cycle is complete
+  const fillAll = props.sessionType === 'long-break'
+  return Array.from({ length: cycleLength.value }, (_, i) => fillAll || i < completedInCycle.value)
+})
+
+// Index of the pomodoro currently in progress (only during focus sessions)
+const activeDotIndex = computed(() => {
+  if (props.sessionType !== 'focus') return -1
+  return completedInCycle.value
+})
+
+const cycleAriaLabel = computed(() => {
+  if (props.sessionType === 'long-break') return 'Long break in progress'
+  const remaining = cycleLength.value - completedInCycle.value
+  const noun = remaining === 1 ? 'pomodoro' : 'pomodoros'
+  return `${completedInCycle.value} of ${cycleLength.value} pomodoros completed this cycle, ${remaining} ${noun} until long break`
 })
 </script>
 
@@ -163,6 +198,40 @@ const sessionLabel = computed(() => {
 .session-info {
   margin-top: 0.25rem;
   min-height: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Pomodoro cycle dots */
+.cycle-dots {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.cycle-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-color);
+  transition:
+    background 0.3s ease,
+    border-color 0.3s ease,
+    box-shadow 0.3s ease;
+}
+
+.cycle-dot.is-filled {
+  background: var(--color-focus);
+  border-color: var(--color-focus);
+}
+
+/* The pomodoro currently in progress */
+.cycle-dot.is-active {
+  border-color: var(--color-focus);
+  box-shadow: 0 0 0 2px var(--color-primary-shadow);
 }
 
 .current-label {
@@ -242,6 +311,11 @@ const sessionLabel = computed(() => {
 
 .compact-mode .session-icon {
   font-size: 1.15rem;
+}
+
+.compact-mode .cycle-dot {
+  width: 0.375rem;
+  height: 0.375rem;
 }
 
 @media (max-width: 640px) {
