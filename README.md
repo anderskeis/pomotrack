@@ -58,7 +58,7 @@ Open <http://localhost:8080>. Data persists in `pomotrack-data` volume.
 Access via your machine's IP (e.g., <http://192.168.1.100:8080>).
 
 ### Development
-**Prerequisites:** Python 3.11+, Node.js 20+, uv
+**Prerequisites:** Python 3.11+, Node.js 22+, uv
 
 ```bash
 # Backend

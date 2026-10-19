@@ -1,6 +1,7 @@
 # Node.js / Frontend
 node_modules/
 frontend/dist/
+frontend/tsconfig.tsbuildinfo
 .env
 .env.local
 .env.*.local
