@@ -123,12 +123,13 @@
           <TimerDisplay
             :formattedTime="formattedTime"
             :sessionType="sessionType"
-            :currentLabel="sessionLabel"
+            :currentLabel="activeLabel"
             :urgencyLevel="urgencyWarningEnabled ? urgencyLevel : 'normal'"
             :isRunning="isRunning"
             :progress="progress"
             :completedPomodoros="completedPomodoros"
             :pomodorosUntilLongBreak="config.pomodorosUntilLongBreak"
+            @selectMode="handleSelectMode"
           />
           <TimerControls
             :isRunning="isRunning"
@@ -156,7 +157,7 @@
             :completedBreaks="completedBreaks"
             :focusDuration="config.focusDuration"
             :dailyGoal="config.dailyGoal"
-            :hasHistory="todayStats.focusCount > 0"
+            :hasHistory="history.entries.length > 0"
             @showSummary="showSummaryModal = true"
           />
         </aside>
@@ -287,7 +288,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, watch } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import {
   TimerDisplay,
   TimerControls,
@@ -431,8 +432,16 @@ const autoSyncEnabled = useStorage("auto-sync-enabled", false);
 // Kanban board
 const { activeTask, incrementActiveTaskPomodoros, clearAllTasks } = useKanban();
 
+// Active label displayed on the timer (uses active Kanban task when Kanban is enabled)
+const activeLabel = computed(() =>
+  kanbanEnabled.value && activeTask.value
+    ? activeTask.value.title
+    : sessionLabel.value,
+);
+
 // Session history
 const {
+  history,
   todayStats,
   todayEntries,
   weekEntries,
@@ -541,6 +550,7 @@ const {
   pause,
   skip,
   reset,
+  setSessionType,
 } = useTimer(config, onSessionComplete, onSessionStart);
 
 // Dynamic favicon
@@ -607,6 +617,11 @@ const handleSkip = () => {
 const handleReset = () => {
   sessionInProgress = false;
   reset();
+};
+
+const handleSelectMode = (type: SessionType) => {
+  sessionInProgress = false;
+  setSessionType(type);
 };
 
 // Keyboard shortcuts

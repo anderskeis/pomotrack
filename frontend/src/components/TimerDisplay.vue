@@ -1,8 +1,22 @@
 <template>
   <div class="timer-display" :class="[sessionTypeClass, urgencyClass]">
-    <div class="session-indicator">
-      <span class="session-icon">{{ sessionIcon }}</span>
-      <span class="session-label">{{ sessionLabel }}</span>
+    <div class="session-switcher" role="tablist" aria-label="Timer session mode">
+      <button
+        v-for="mode in sessionModes"
+        :key="mode.type"
+        type="button"
+        role="tab"
+        class="session-tab"
+        :class="[
+          `tab-${mode.type}`,
+          { active: sessionType === mode.type },
+        ]"
+        :aria-selected="sessionType === mode.type"
+        @click="handleSelectMode(mode.type)"
+      >
+        <span class="session-icon" aria-hidden="true">{{ mode.icon }}</span>
+        <span class="session-label">{{ mode.label }}</span>
+      </button>
     </div>
     <div class="timer-circle-container">
       <svg class="progress-ring" viewBox="0 0 280 280">
@@ -39,7 +53,9 @@
           :class="{ 'is-filled': filled, 'is-active': i === activeDotIndex }"
         ></span>
       </div>
-      <span v-if="currentLabel" class="current-label">{{ currentLabel }}</span>
+      <span v-if="currentLabel" class="current-label" :title="currentLabel">
+        🎯 {{ currentLabel }}
+      </span>
     </div>
   </div>
 </template>
@@ -59,6 +75,22 @@ const props = defineProps<{
   pomodorosUntilLongBreak?: number
 }>()
 
+const emit = defineEmits<{
+  selectMode: [type: SessionType]
+}>()
+
+const sessionModes: { type: SessionType; label: string; icon: string }[] = [
+  { type: 'focus', label: 'Focus', icon: '🍅' },
+  { type: 'short-break', label: 'Short Break', icon: '☕' },
+  { type: 'long-break', label: 'Long Break', icon: '🌴' },
+]
+
+const handleSelectMode = (type: SessionType) => {
+  if (type !== props.sessionType) {
+    emit('selectMode', type)
+  }
+}
+
 const radius = 120
 const strokeDasharray = 2 * Math.PI * radius
 
@@ -72,22 +104,6 @@ const sessionTypeClass = computed(() => `session-${props.sessionType}`)
 const urgencyClass = computed(() => {
   if (!props.isRunning || props.sessionType !== 'focus') return ''
   return props.urgencyLevel ? `urgency-${props.urgencyLevel}` : ''
-})
-
-const sessionIcon = computed(() => {
-  switch (props.sessionType) {
-    case 'focus': return '🍅'
-    case 'short-break': return '☕'
-    case 'long-break': return '🌴'
-  }
-})
-
-const sessionLabel = computed(() => {
-  switch (props.sessionType) {
-    case 'focus': return 'Focus'
-    case 'short-break': return 'Short Break'
-    case 'long-break': return 'Long Break'
-  }
 })
 
 // Pomodoro cycle dots — progress toward the long break
@@ -123,40 +139,82 @@ const cycleAriaLabel = computed(() => {
   align-items: center;
   justify-content: center;
   border-radius: 12px;
-  background: var(--panel-bg);
-  border: 1px solid var(--border-color);
   transition: all 0.3s ease;
   width: 100%;
   max-width: 450px;
 }
 
-.session-indicator {
-  display: flex;
+.session-switcher {
+  display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 0.25rem;
-  font-size: 1.25rem;
+  gap: 0.25rem;
+  padding: 0.25rem;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 999px;
+  margin-bottom: 0.5rem;
+}
+
+.session-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.4rem 0.875rem;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
   color: var(--text-secondary);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    box-shadow 0.2s ease;
+  white-space: nowrap;
+}
+
+.session-tab:hover:not(.active) {
+  color: var(--text-primary);
+  background: var(--bg-subtle);
+}
+
+.session-tab.active.tab-focus {
+  background: var(--color-focus);
+  color: #ffffff;
+  box-shadow: 0 2px 8px var(--color-primary-shadow);
+}
+
+.session-tab.active.tab-short-break {
+  background: var(--color-short-break);
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(34, 197, 94, 0.25);
+}
+
+.session-tab.active.tab-long-break {
+  background: var(--color-long-break);
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.25);
 }
 
 .session-icon {
-  font-size: 1.5rem;
+  font-size: 1rem;
+  line-height: 1;
 }
 
 .session-label {
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  font-weight: 600;
+  letter-spacing: 0.02em;
 }
 
 .timer-circle-container {
   position: relative;
   width: 240px;
   height: 240px;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 0.75rem 0;
+  margin: 0.5rem 0;
 }
 
 .progress-ring {
@@ -201,7 +259,7 @@ const cycleAriaLabel = computed(() => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.625rem;
 }
 
 /* Pomodoro cycle dots */
@@ -235,26 +293,20 @@ const cycleAriaLabel = computed(() => {
 }
 
 .current-label {
-  font-size: 1.25rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  max-width: 320px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.9375rem;
   font-weight: 600;
   color: var(--text-primary);
-  background: var(--color-primary);
-  padding: 0.5rem 1.25rem;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-color);
+  padding: 0.375rem 1rem;
   border-radius: 999px;
-  box-shadow: 0 2px 8px var(--color-primary-shadow);
-}
-
-/* Session type variants */
-.session-focus .session-indicator {
-  color: var(--color-focus);
-}
-
-.session-short-break .session-indicator {
-  color: var(--color-short-break);
-}
-
-.session-long-break .session-indicator {
-  color: var(--color-long-break);
 }
 
 /* Urgency states - only during focus */
@@ -262,7 +314,7 @@ const cycleAriaLabel = computed(() => {
   color: var(--color-urgency-warning, #f59e0b);
 }
 
-.urgency-warning {
+.urgency-warning .timer-circle-container {
   animation: pulse-warning 2s ease-in-out infinite;
 }
 
@@ -270,7 +322,7 @@ const cycleAriaLabel = computed(() => {
   color: var(--color-urgency-critical, #ef4444);
 }
 
-.urgency-critical {
+.urgency-critical .timer-circle-container {
   animation: pulse-critical 1s ease-in-out infinite;
 }
 
@@ -279,18 +331,16 @@ const cycleAriaLabel = computed(() => {
     box-shadow: 0 0 0 0 rgba(245, 158, 11, 0);
   }
   50% {
-    box-shadow: 0 0 20px 4px rgba(245, 158, 11, 0.3);
+    box-shadow: 0 0 24px 4px rgba(245, 158, 11, 0.3);
   }
 }
 
 @keyframes pulse-critical {
   0%, 100% {
     box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
-    border-color: var(--border-color);
   }
   50% {
-    box-shadow: 0 0 25px 6px rgba(239, 68, 68, 0.4);
-    border-color: var(--color-urgency-critical, #ef4444);
+    box-shadow: 0 0 28px 6px rgba(239, 68, 68, 0.4);
   }
 }
 
@@ -305,12 +355,13 @@ const cycleAriaLabel = computed(() => {
   font-size: 2.75rem;
 }
 
-.compact-mode .session-indicator {
-  font-size: 1rem;
+.compact-mode .session-tab {
+  padding: 0.3rem 0.65rem;
+  font-size: 0.75rem;
 }
 
 .compact-mode .session-icon {
-  font-size: 1.15rem;
+  font-size: 0.875rem;
 }
 
 .compact-mode .cycle-dot {
@@ -328,8 +379,14 @@ const cycleAriaLabel = computed(() => {
     font-size: 3.8rem;
   }
 
+  .session-tab {
+    padding: 0.35rem 0.65rem;
+    font-size: 0.75rem;
+  }
+
   .current-label {
-    font-size: 1rem;
+    font-size: 0.875rem;
+    max-width: 260px;
   }
 }
 </style>

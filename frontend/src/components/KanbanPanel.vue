@@ -42,14 +42,27 @@
             @dragstart="handleDragStart($event, task)"
             @dragend="handleDragEnd"
           >
-            <span class="task-title">{{ task.title }}</span>
-            <button
-              class="btn-delete"
-              @click="deleteTask(task.id)"
-              title="Delete task"
-            >
-              ×
-            </button>
+            <span class="task-title" :title="task.title">{{ task.title }}</span>
+            <div class="task-actions">
+              <button
+                type="button"
+                class="btn-action btn-start-task"
+                @click="moveTask(task.id, 'in-progress')"
+                title="Start task (Move to In Progress)"
+                aria-label="Move task to In Progress"
+              >
+                ▶
+              </button>
+              <button
+                type="button"
+                class="btn-action btn-delete"
+                @click="deleteTask(task.id)"
+                title="Delete task"
+                aria-label="Delete task"
+              >
+                ×
+              </button>
+            </div>
           </div>
           <div v-if="todoTasks.length === 0" class="column-empty">No tasks</div>
         </div>
@@ -70,26 +83,56 @@
             v-for="task in inProgressTasks"
             :key="task.id"
             class="task-card task-active"
+            :class="{ 'is-primary-active': activeTask?.id === task.id }"
             draggable="true"
             @dragstart="handleDragStart($event, task)"
             @dragend="handleDragEnd"
           >
-            <span class="task-title">{{ task.title }}</span>
+            <span
+              v-if="activeTask?.id === task.id"
+              class="active-badge"
+              title="Active task receiving Pomodoro focus counts"
+            >
+              🎯 Active
+            </span>
+            <span class="task-title" :title="task.title">{{ task.title }}</span>
             <div class="task-meta">
               <span class="task-pomodoros" v-if="task.pomodorosCompleted > 0">
                 {{ task.pomodorosCompleted }} 🍅
               </span>
             </div>
-            <button
-              class="btn-delete"
-              @click="deleteTask(task.id)"
-              title="Delete task"
-            >
-              ×
-            </button>
+            <div class="task-actions">
+              <button
+                type="button"
+                class="btn-action"
+                @click="moveTask(task.id, 'todo')"
+                title="Move back to To Do"
+                aria-label="Move task back to To Do"
+              >
+                ↩
+              </button>
+              <button
+                type="button"
+                class="btn-action btn-complete-task"
+                @click="moveTask(task.id, 'done')"
+                title="Mark as Done"
+                aria-label="Mark task as Done"
+              >
+                ✓
+              </button>
+              <button
+                type="button"
+                class="btn-action btn-delete"
+                @click="deleteTask(task.id)"
+                title="Delete task"
+                aria-label="Delete task"
+              >
+                ×
+              </button>
+            </div>
           </div>
           <div v-if="inProgressTasks.length === 0" class="column-empty">
-            Drag a task here
+            Drag or click ▶ on a task to start
           </div>
         </div>
       </div>
@@ -105,9 +148,11 @@
           <span class="column-count">{{ doneTasks.length }}</span>
           <button
             v-if="doneTasks.length > 0"
+            type="button"
             class="btn-clear"
             @click="clearDoneTasks"
             title="Clear done tasks"
+            aria-label="Clear done tasks"
           >
             🗑️
           </button>
@@ -121,10 +166,30 @@
             @dragstart="handleDragStart($event, task)"
             @dragend="handleDragEnd"
           >
-            <span class="task-title">{{ task.title }}</span>
+            <span class="task-title" :title="task.title">{{ task.title }}</span>
             <span class="task-pomodoros" v-if="task.pomodorosCompleted > 0">
               {{ task.pomodorosCompleted }} 🍅
             </span>
+            <div class="task-actions">
+              <button
+                type="button"
+                class="btn-action"
+                @click="moveTask(task.id, 'in-progress')"
+                title="Reopen task (Move to In Progress)"
+                aria-label="Reopen task"
+              >
+                ↩
+              </button>
+              <button
+                type="button"
+                class="btn-action btn-delete"
+                @click="deleteTask(task.id)"
+                title="Delete task"
+                aria-label="Delete task"
+              >
+                ×
+              </button>
+            </div>
           </div>
           <div v-if="doneTasks.length === 0" class="column-empty">
             Completed tasks
@@ -147,6 +212,7 @@ const {
   todoTasks,
   inProgressTasks,
   doneTasks,
+  activeTask,
   addTask,
   moveTask,
   deleteTask,
@@ -196,6 +262,10 @@ const handleDrop = (event: DragEvent, status: KanbanStatus) => {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+  padding: 1rem;
+  background: var(--panel-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
 }
 
 .panel-title {
@@ -325,7 +395,7 @@ const handleDrop = (event: DragEvent, status: KanbanStatus) => {
 .task-card {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.375rem;
   padding: 0.5rem 0.625rem;
   background: var(--bg-secondary);
   border: 1px solid var(--border-color);
@@ -359,8 +429,26 @@ const handleDrop = (event: DragEvent, status: KanbanStatus) => {
   border-color: rgba(239, 68, 68, 0.4);
 }
 
+.task-card.task-active.is-primary-active {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 1px var(--color-primary-shadow);
+}
+
 .task-card.task-active:hover {
   border-color: var(--color-primary);
+}
+
+.active-badge {
+  font-size: 0.625rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  background: var(--color-primary);
+  color: #ffffff;
+  padding: 0.1rem 0.375rem;
+  border-radius: 999px;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 /* Done tasks - secondary indigo/purple tint */
@@ -376,6 +464,7 @@ const handleDrop = (event: DragEvent, status: KanbanStatus) => {
 
 .task-title {
   flex: 1;
+  min-width: 0;
   font-size: 0.8125rem;
   color: var(--text-primary);
   white-space: nowrap;
@@ -387,35 +476,76 @@ const handleDrop = (event: DragEvent, status: KanbanStatus) => {
   display: flex;
   align-items: center;
   gap: 0.25rem;
+  flex-shrink: 0;
 }
 
 .task-pomodoros {
   font-size: 0.6875rem;
   color: var(--text-muted);
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
-.btn-delete {
+.task-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.15rem;
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.task-card:hover .task-actions,
+.task-card:focus-within .task-actions {
+  opacity: 1;
+}
+
+@media (hover: none) {
+  .task-actions {
+    opacity: 1;
+  }
+}
+
+.btn-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   padding: 0;
-  width: 18px;
-  height: 18px;
-  font-size: 1rem;
+  width: 20px;
+  height: 20px;
+  font-size: 0.75rem;
   line-height: 1;
   background: transparent;
-  border: none;
-  border-radius: 2px;
-  color: var(--text-muted);
+  border: 1px solid transparent;
+  border-radius: 4px;
+  color: var(--text-secondary);
   cursor: pointer;
-  opacity: 0;
   transition: all 0.15s ease;
 }
 
-.task-card:hover .btn-delete {
-  opacity: 1;
+.btn-action:hover {
+  background: var(--bg-input);
+  border-color: var(--border-color);
+  color: var(--text-primary);
+}
+
+.btn-start-task:hover {
+  color: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.btn-complete-task:hover {
+  color: var(--color-short-break);
+  border-color: var(--color-short-break);
+}
+
+.btn-delete {
+  font-size: 0.95rem;
 }
 
 .btn-delete:hover {
   color: var(--color-primary);
+  border-color: var(--color-primary);
   background: var(--bg-input);
 }
 
@@ -429,6 +559,10 @@ const handleDrop = (event: DragEvent, status: KanbanStatus) => {
 }
 
 /* Compact mode */
+.compact-mode .kanban-panel {
+  padding: 0.75rem;
+}
+
 .compact-mode .kanban-columns {
   gap: 0.5rem;
 }

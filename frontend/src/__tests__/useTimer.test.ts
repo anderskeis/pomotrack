@@ -130,6 +130,23 @@ describe('useTimer', () => {
         expect(sessionType.value).toBe('focus')
     })
 
+    it('switches session mode directly via setSessionType', () => {
+        const config = ref<TimerConfig>({ ...defaultConfig })
+        const { sessionType, remaining, isRunning, start, setSessionType } = useTimer(config)
+
+        start()
+        expect(isRunning.value).toBe(true)
+
+        setSessionType('short-break')
+        expect(isRunning.value).toBe(false)
+        expect(sessionType.value).toBe('short-break')
+        expect(remaining.value).toBe(config.value.shortBreakDuration * 60)
+
+        setSessionType('long-break')
+        expect(sessionType.value).toBe('long-break')
+        expect(remaining.value).toBe(config.value.longBreakDuration * 60)
+    })
+
     it('formats time correctly', () => {
         const config = ref<TimerConfig>({ ...defaultConfig, focusDuration: 25 })
         const { formattedTime } = useTimer(config)

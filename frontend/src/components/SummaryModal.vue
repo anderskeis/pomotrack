@@ -52,10 +52,30 @@
         <!-- Label Breakdown -->
         <div v-if="currentStats.labelBreakdown.length > 0" class="summary-breakdown">
           <h3>By Label</h3>
-          <ul>
-            <li v-for="item in currentStats.labelBreakdown" :key="item.label">
-              <span class="breakdown-label">{{ item.label }}</span>
-              <span class="breakdown-count">{{ item.count }}</span>
+          <ul class="breakdown-list">
+            <li v-for="item in currentStats.labelBreakdown" :key="item.label" class="breakdown-item">
+              <div class="breakdown-row">
+                <span class="breakdown-label" :title="item.label">{{ item.label }}</span>
+                <span class="breakdown-meta">
+                  <strong class="breakdown-count">{{ item.count }} 🍅</strong>
+                  <span class="breakdown-detail">
+                    {{ formatMinutes(item.minutes) }} · {{ item.percent }}%
+                  </span>
+                </span>
+              </div>
+              <div
+                class="breakdown-bar"
+                role="progressbar"
+                :aria-valuenow="item.percent"
+                aria-valuemin="0"
+                aria-valuemax="100"
+                :aria-label="`${item.label}: ${item.percent}% of focus time`"
+              >
+                <div
+                  class="breakdown-bar-fill"
+                  :style="{ width: `${Math.max(item.percent, 4)}%` }"
+                ></div>
+              </div>
             </li>
           </ul>
         </div>
@@ -94,6 +114,13 @@ const modalTitle = computed(() => {
   }
 });
 
+const formatMinutes = (mins: number) => {
+  if (mins < 60) return `${mins}m`;
+  const hours = Math.floor(mins / 60);
+  const rem = mins % 60;
+  return rem > 0 ? `${hours}h ${rem}m` : `${hours}h`;
+};
+
 const calculateStats = (entries: SessionHistoryEntry[]) => {
   const focusSessions = entries.filter((e) => e.type === "focus");
   const breakSessions = entries.filter((e) => e.type !== "focus");
@@ -102,22 +129,36 @@ const calculateStats = (entries: SessionHistoryEntry[]) => {
     0,
   );
 
-  const labelCounts = new Map<string, number>();
+  const labelMap = new Map<string, { count: number; duration: number }>();
   focusSessions.forEach((e) => {
     const label = e.label || "Unlabeled";
-    labelCounts.set(label, (labelCounts.get(label) || 0) + 1);
+    const prev = labelMap.get(label) || { count: 0, duration: 0 };
+    labelMap.set(label, {
+      count: prev.count + 1,
+      duration: prev.duration + e.duration,
+    });
   });
 
   return {
     focusCount: focusSessions.length,
     breakCount: breakSessions.length,
     totalFocusMinutes: Math.round(totalFocusTime / 60),
-    labelBreakdown: Array.from(labelCounts.entries())
-      .map(([label, count]) => ({
-        label,
-        count,
-      }))
-      .sort((a, b) => b.count - a.count),
+    labelBreakdown: Array.from(labelMap.entries())
+      .map(([label, data]) => {
+        const percent =
+          totalFocusTime > 0
+            ? Math.round((data.duration / totalFocusTime) * 100)
+            : focusSessions.length > 0
+              ? Math.round((data.count / focusSessions.length) * 100)
+              : 0;
+        return {
+          label,
+          count: data.count,
+          minutes: Math.round(data.duration / 60),
+          percent,
+        };
+      })
+      .sort((a, b) => b.count - a.count || b.minutes - a.minutes),
   };
 };
 
@@ -256,39 +297,76 @@ const currentStats = computed(() => {
 }
 
 .summary-breakdown h3 {
-  font-size: 0.875rem;
-  color: var(--text-secondary);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-muted);
   margin: 0 0 0.75rem 0;
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
 
-.summary-breakdown ul {
+.breakdown-list {
   list-style: none;
   padding: 0;
   margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
 }
 
-.summary-breakdown li {
+.breakdown-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.breakdown-row {
   display: flex;
   justify-content: space-between;
-  padding: 0.5rem 0;
-  border-bottom: 1px solid var(--border-color);
-}
-
-.summary-breakdown li:last-child {
-  border-bottom: none;
+  align-items: baseline;
+  gap: 0.5rem;
 }
 
 .breakdown-label {
   color: var(--text-primary);
   font-size: 0.875rem;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.breakdown-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+  font-size: 0.8125rem;
 }
 
 .breakdown-count {
-  color: var(--text-secondary);
+  color: var(--text-primary);
   font-weight: 600;
-  font-size: 0.875rem;
+}
+
+.breakdown-detail {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+
+.breakdown-bar {
+  width: 100%;
+  height: 6px;
+  background: var(--bg-subtle);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.breakdown-bar-fill {
+  height: 100%;
+  background: var(--color-primary);
+  border-radius: 999px;
+  transition: width 0.3s ease;
 }
 
 .summary-empty {
