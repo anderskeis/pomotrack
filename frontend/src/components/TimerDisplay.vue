@@ -14,12 +14,23 @@
         :aria-selected="sessionType === mode.type"
         @click="handleSelectMode(mode.type)"
       >
-        <span class="session-icon" aria-hidden="true">{{ mode.icon }}</span>
+        <ThemeIcon :themeId="themeId || 'default'" :slot="mode.slot" :fallback="mode.icon" />
         <span class="session-label">{{ mode.label }}</span>
       </button>
     </div>
     <div class="timer-circle-container">
       <svg class="progress-ring" viewBox="0 0 280 280">
+        <!-- Decorative inner ring for sci-fi / gothic themes -->
+        <circle
+          class="progress-ring__inner-deco"
+          stroke="var(--border-color)"
+          stroke-width="1.5"
+          stroke-dasharray="4 6"
+          fill="transparent"
+          r="104"
+          cx="140"
+          cy="140"
+        />
         <circle
           class="progress-ring__background"
           stroke="var(--bg-subtle)"
@@ -54,7 +65,8 @@
         ></span>
       </div>
       <span v-if="currentLabel" class="current-label" :title="currentLabel">
-        🎯 {{ currentLabel }}
+        <ThemeIcon :themeId="themeId || 'default'" slot="active" />
+        {{ currentLabel }}
       </span>
     </div>
   </div>
@@ -62,7 +74,8 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { SessionType, UrgencyLevel } from '../composables'
+import type { SessionType, UrgencyLevel, ThemeIcons, ThemeLabels } from '../composables'
+import ThemeIcon from './ThemeIcon.vue'
 
 const props = defineProps<{
   formattedTime: string
@@ -73,17 +86,42 @@ const props = defineProps<{
   progress?: number
   completedPomodoros?: number
   pomodorosUntilLongBreak?: number
+  themeId?: string
+  themeIcons?: ThemeIcons
+  modeLabels?: ThemeLabels['modes']
 }>()
 
 const emit = defineEmits<{
   selectMode: [type: SessionType]
 }>()
 
-const sessionModes: { type: SessionType; label: string; icon: string }[] = [
-  { type: 'focus', label: 'Focus', icon: '🍅' },
-  { type: 'short-break', label: 'Short Break', icon: '☕' },
-  { type: 'long-break', label: 'Long Break', icon: '🌴' },
-]
+const sessionModes = computed<
+  {
+    type: SessionType
+    slot: 'focus' | 'shortBreak' | 'longBreak'
+    label: string
+    icon: string
+  }[]
+>(() => [
+  {
+    type: 'focus',
+    slot: 'focus',
+    label: props.modeLabels?.focus ?? 'Focus',
+    icon: props.themeIcons?.focus ?? '🍅',
+  },
+  {
+    type: 'short-break',
+    slot: 'shortBreak',
+    label: props.modeLabels?.shortBreak ?? 'Short Break',
+    icon: props.themeIcons?.shortBreak ?? '☕',
+  },
+  {
+    type: 'long-break',
+    slot: 'longBreak',
+    label: props.modeLabels?.longBreak ?? 'Long Break',
+    icon: props.themeIcons?.longBreak ?? '🌴',
+  },
+])
 
 const handleSelectMode = (type: SessionType) => {
   if (type !== props.sessionType) {
@@ -203,7 +241,8 @@ const cycleAriaLabel = computed(() => {
 }
 
 .session-label {
-  letter-spacing: 0.02em;
+  letter-spacing: 0.04em;
+  font-family: var(--font-heading, inherit);
 }
 
 .timer-circle-container {
@@ -225,8 +264,13 @@ const cycleAriaLabel = computed(() => {
   height: 100%;
 }
 
+.progress-ring__inner-deco {
+  opacity: 0.45;
+}
+
 .progress-ring__progress {
   transition: stroke-dashoffset 0.35s ease, stroke 0.3s ease;
+  filter: drop-shadow(0 0 6px var(--color-primary-shadow));
 }
 
 /* Default progress ring stroke colors */
@@ -245,12 +289,13 @@ const cycleAriaLabel = computed(() => {
 .time {
   position: relative;
   z-index: 1;
-  font-size: 4rem;
+  font-size: 3.75rem;
   font-weight: 700;
-  font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
-  letter-spacing: 0.02em;
+  font-family: var(--font-mono, 'SF Mono', 'Fira Code', 'Consolas', monospace);
+  letter-spacing: 0.03em;
   color: var(--text-primary);
   line-height: 1;
+  text-shadow: 0 0 18px var(--color-primary-shadow);
 }
 
 .session-info {

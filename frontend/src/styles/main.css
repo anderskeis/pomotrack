@@ -168,3 +168,250 @@ body {
 [data-theme="dark"]::-webkit-scrollbar-thumb:hover {
     background: var(--border-color);
 }
+
+/* ==========================================================================
+   Full Theme Visualizations — Warhammer 40K & Star Wars
+   ========================================================================== */
+
+/* Shared themed panel transition */
+.themed-panel {
+    position: relative;
+    backdrop-filter: blur(10px);
+    transition: border-color 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
+}
+
+/* --------------------------------------------------------------------------
+   WARHAMMER 40K — Grimdark Imperium & Adeptus Mechanicus Data-Slate
+   -------------------------------------------------------------------------- */
+[data-theme-preset="warhammer40k"] .themed-panel,
+[data-theme-preset="warhammer40k"] .modal {
+    border-radius: 2px !important;
+    border: 2px solid var(--border-color) !important;
+    box-shadow:
+        inset 0 0 0 1px rgba(212, 175, 55, 0.22),
+        inset 0 0 28px rgba(0, 0, 0, 0.65),
+        0 10px 30px rgba(0, 0, 0, 0.7);
+}
+
+/* Ornate Imperial Gold corner brackets + rivets on panels */
+[data-theme-preset="warhammer40k"] .themed-panel::before {
+    content: "❖";
+    position: absolute;
+    top: 4px;
+    left: 7px;
+    font-size: 0.65rem;
+    color: var(--color-primary);
+    opacity: 0.75;
+    pointer-events: none;
+    line-height: 1;
+}
+
+[data-theme-preset="warhammer40k"] .themed-panel::after {
+    content: "❖";
+    position: absolute;
+    top: 4px;
+    right: 7px;
+    font-size: 0.65rem;
+    color: var(--color-primary);
+    opacity: 0.75;
+    pointer-events: none;
+    line-height: 1;
+}
+
+[data-theme-preset="warhammer40k"] .header {
+    border-bottom: 2px solid var(--color-primary) !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.7);
+}
+
+[data-theme-preset="warhammer40k"] .footer {
+    border-top: 2px solid var(--border-color) !important;
+    font-family: var(--font-heading);
+    letter-spacing: 0.12em;
+    color: var(--color-primary) !important;
+    text-shadow: 0 0 10px var(--color-primary-shadow);
+}
+
+[data-theme-preset="warhammer40k"] .panel-title,
+[data-theme-preset="warhammer40k"] .input-label,
+[data-theme-preset="warhammer40k"] .column-title,
+[data-theme-preset="warhammer40k"] .modal-header h2 {
+    font-family: var(--font-heading) !important;
+    letter-spacing: 0.1em !important;
+    color: var(--color-primary) !important;
+}
+
+[data-theme-preset="warhammer40k"] .btn-primary {
+    background: linear-gradient(180deg, #e5c158 0%, #b88c1e 100%) !important;
+    color: #141008 !important;
+    border: 1px solid #f7df8b !important;
+    border-radius: 2px !important;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    box-shadow: 0 4px 16px rgba(212, 175, 55, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+[data-theme-preset="warhammer40k"] .btn-secondary {
+    background: linear-gradient(180deg, #b81419 0%, #7a0b0e 100%) !important;
+    border: 1px solid #ef4444 !important;
+    border-radius: 2px !important;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+[data-theme-preset="warhammer40k"] .btn-ghost,
+[data-theme-preset="warhammer40k"] .btn-summary,
+[data-theme-preset="warhammer40k"] .quick-label {
+    border-radius: 2px !important;
+    font-family: var(--font-heading);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+[data-theme-preset="warhammer40k"] .session-switcher {
+    border-radius: 3px !important;
+    border: 1px solid var(--color-primary) !important;
+}
+
+[data-theme-preset="warhammer40k"] .session-tab {
+    border-radius: 2px !important;
+    text-transform: uppercase;
+}
+
+[data-theme-preset="warhammer40k"] .session-tab.active.tab-focus {
+    color: #141008 !important;
+}
+
+[data-theme-preset="warhammer40k"] .current-label {
+    border-radius: 2px !important;
+    border: 1px solid #9a1115 !important;
+    background: rgba(154, 17, 21, 0.28) !important;
+    font-family: var(--font-heading);
+    letter-spacing: 0.05em;
+}
+
+/* --------------------------------------------------------------------------
+   STAR WARS — HoloNet & Kyber Crystal Command Bridge
+   -------------------------------------------------------------------------- */
+[data-theme-preset="starwars"] .themed-panel,
+[data-theme-preset="starwars"] .modal {
+    border-radius: 4px !important;
+    border: 1px solid var(--border-color) !important;
+    box-shadow:
+        0 0 22px rgba(0, 196, 255, 0.16),
+        inset 0 0 18px rgba(0, 196, 255, 0.08);
+    background-image: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 3px,
+        rgba(0, 196, 255, 0.03) 3px,
+        rgba(0, 196, 255, 0.03) 4px
+    );
+    clip-path: polygon(
+        0 10px,
+        10px 0,
+        calc(100% - 10px) 0,
+        100% 10px,
+        100% calc(100% - 10px),
+        calc(100% - 10px) 100%,
+        10px 100%,
+        0 calc(100% - 10px)
+    );
+}
+
+/* Glowing Holo-HUD top bar accent */
+[data-theme-preset="starwars"] .themed-panel::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 18px;
+    right: 18px;
+    height: 2px;
+    background: linear-gradient(
+        90deg,
+        transparent 0%,
+        var(--color-primary) 50%,
+        transparent 100%
+    );
+    opacity: 0.85;
+    pointer-events: none;
+}
+
+[data-theme-preset="starwars"] .header {
+    border-bottom: 1px solid var(--color-primary) !important;
+    box-shadow: 0 0 20px rgba(0, 196, 255, 0.2);
+}
+
+[data-theme-preset="starwars"] .footer {
+    border-top: 1px solid var(--border-color) !important;
+    font-family: var(--font-heading);
+    letter-spacing: 0.14em;
+    color: var(--color-primary) !important;
+    text-shadow: 0 0 10px var(--color-primary-shadow);
+}
+
+[data-theme-preset="starwars"] .panel-title,
+[data-theme-preset="starwars"] .input-label,
+[data-theme-preset="starwars"] .column-title,
+[data-theme-preset="starwars"] .modal-header h2 {
+    font-family: var(--font-heading) !important;
+    letter-spacing: 0.12em !important;
+    color: var(--color-primary) !important;
+    text-shadow: 0 0 8px var(--color-primary-shadow);
+}
+
+[data-theme-preset="starwars"] .btn-primary {
+    background: linear-gradient(135deg, #00c4ff 0%, #0077cc 100%) !important;
+    color: #030914 !important;
+    border: 1px solid #7ce2ff !important;
+    border-radius: 3px !important;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    box-shadow: 0 0 18px rgba(0, 196, 255, 0.45);
+    clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+}
+
+[data-theme-preset="starwars"] .btn-secondary {
+    background: linear-gradient(135deg, #ff333d 0%, #b5121b 100%) !important;
+    border: 1px solid #ff8086 !important;
+    border-radius: 3px !important;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    box-shadow: 0 0 18px rgba(232, 32, 42, 0.45);
+    clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+}
+
+[data-theme-preset="starwars"] .btn-ghost,
+[data-theme-preset="starwars"] .btn-summary,
+[data-theme-preset="starwars"] .quick-label {
+    border-radius: 3px !important;
+    font-family: var(--font-heading);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+[data-theme-preset="starwars"] .session-switcher {
+    border-radius: 4px !important;
+    border: 1px solid var(--border-color) !important;
+    box-shadow: inset 0 0 10px rgba(0, 196, 255, 0.12);
+}
+
+[data-theme-preset="starwars"] .session-tab {
+    border-radius: 3px !important;
+    text-transform: uppercase;
+    font-size: 0.75rem !important;
+}
+
+[data-theme-preset="starwars"] .session-tab.active.tab-focus,
+[data-theme-preset="starwars"] .session-tab.active.tab-short-break,
+[data-theme-preset="starwars"] .session-tab.active.tab-long-break {
+    color: #040a12 !important;
+}
+
+[data-theme-preset="starwars"] .current-label {
+    border-radius: 3px !important;
+    border: 1px solid var(--color-primary) !important;
+    background: rgba(0, 196, 255, 0.15) !important;
+    box-shadow: 0 0 12px rgba(0, 196, 255, 0.25);
+    font-family: var(--font-heading);
+    letter-spacing: 0.06em;
+}

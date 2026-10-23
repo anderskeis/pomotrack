@@ -23,7 +23,13 @@ export type {
   SessionType,
   UrgencyLevel,
 } from "./useTimer";
-export type { Theme } from "./useTheme";
+export type {
+  Theme,
+  ThemePreset,
+  ThemePresetId,
+  ThemeIcons,
+  ThemeLabels,
+} from "./useTheme";
 export type { SessionHistoryEntry, SessionHistory } from "./useSessionHistory";
 export type { KanbanTask, KanbanStatus, KanbanState } from "./useKanban";
 export type { AzureConfig, SyncStatus } from "./useAzureSync";

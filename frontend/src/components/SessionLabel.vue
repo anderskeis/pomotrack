@@ -1,12 +1,12 @@
 <template>
-  <div class="session-label-input">
-    <label for="session-label" class="input-label">Session Label</label>
+  <div class="session-label-input themed-panel">
+    <label for="session-label" class="input-label">{{ labels?.title ?? 'Session Label' }}</label>
     <input
       id="session-label"
       type="text"
       :value="modelValue"
       @input="$emit('update:modelValue', ($event.target as HTMLInputElement).value)"
-      placeholder="What are you working on?"
+      :placeholder="labels?.placeholder ?? 'What are you working on?'"
       class="input"
       maxlength="50"
       list="label-presets"
@@ -14,9 +14,9 @@
     <datalist id="label-presets">
       <option v-for="preset in allPresets" :key="preset" :value="preset" />
     </datalist>
-    <div v-if="defaultPresets.length > 0" class="quick-labels">
+    <div v-if="activePresets.length > 0" class="quick-labels">
       <button
-        v-for="preset in defaultPresets.slice(0, 4)"
+        v-for="preset in activePresets.slice(0, 4)"
         :key="preset"
         class="quick-label"
         :class="{ active: modelValue === preset }"
@@ -30,21 +30,25 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import type { ThemeLabels } from '../composables'
 
 const props = defineProps<{
   modelValue: string
   recentLabels?: string[]
+  labels?: ThemeLabels['sessionLabel']
 }>()
 
 defineEmits<{
   'update:modelValue': [value: string]
 }>()
 
-const defaultPresets = ['Deep Work', 'Meetings', 'Learning', 'Admin', 'Creative']
+const fallbackPresets = ['Deep Work', 'Meetings', 'Learning', 'Admin', 'Creative']
+
+const activePresets = computed(() => props.labels?.presets ?? fallbackPresets)
 
 const allPresets = computed(() => {
   const recent = props.recentLabels || []
-  const combined = [...new Set([...recent, ...defaultPresets])]
+  const combined = [...new Set([...recent, ...activePresets.value])]
   return combined.slice(0, 10)
 })
 </script>
@@ -62,9 +66,10 @@ const allPresets = computed(() => {
 
 .input-label {
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: 700;
+  font-family: var(--font-heading, inherit);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
   color: var(--text-muted);
 }
 

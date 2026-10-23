@@ -2,10 +2,21 @@ import { watch, onUnmounted } from 'vue'
 import type { Ref } from 'vue'
 import type { SessionType } from './useTimer'
 
-const COLORS = {
+const DEFAULT_COLORS = {
     focus: '#ef4444',
     'short-break': '#22c55e',
     'long-break': '#3b82f6',
+}
+
+function getSessionColor(sessionType: SessionType): string {
+    if (typeof document !== 'undefined') {
+        const varName = `--color-${sessionType}`
+        const computed = getComputedStyle(document.documentElement)
+            .getPropertyValue(varName)
+            .trim()
+        if (computed) return computed
+    }
+    return DEFAULT_COLORS[sessionType]
 }
 
 // Original favicon for restoration
@@ -16,7 +27,7 @@ function generateProgressFavicon(
     sessionType: SessionType,
     remaining: number
 ): string {
-    const color = COLORS[sessionType]
+    const color = getSessionColor(sessionType)
     const size = 32
     const center = size / 2
     const radius = 12

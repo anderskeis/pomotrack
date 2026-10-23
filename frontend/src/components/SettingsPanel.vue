@@ -203,7 +203,7 @@
         <h3 class="panel-title">Display</h3>
         <div class="settings-group">
           <div class="setting-item setting-row">
-            <label class="setting-label">Theme</label>
+            <label class="setting-label">Mode</label>
             <button @click="$emit('toggleTheme')" class="btn btn-toggle">
               {{ theme === "dark" ? "🌙 Dark" : "☀️ Light" }}
             </button>
@@ -231,6 +231,63 @@
             </button>
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- Theme Presets Section -->
+    <div v-if="availableThemes && availableThemes.length > 0" class="theme-presets-section">
+      <h3 class="panel-title">Theme</h3>
+      <div class="theme-cards" role="radiogroup" aria-label="Select theme">
+        <button
+          v-for="preset in availableThemes"
+          :key="preset.id"
+          type="button"
+          role="radio"
+          :aria-checked="themePresetId === preset.id"
+          class="theme-card"
+          :class="{ active: themePresetId === preset.id }"
+          @click="$emit('selectThemePreset', preset.id)"
+        >
+          <div
+            class="theme-card-banner"
+            :style="{
+              backgroundColor: preset.colors[theme]['--bg-primary'],
+              backgroundImage: preset.backgroundImage
+                ? `url('${preset.backgroundImage}')`
+                : 'none',
+              borderColor: preset.colors[theme]['--border-color'],
+            }"
+          >
+            <span
+              class="theme-swatches"
+              aria-hidden="true"
+            >
+              <span
+                class="theme-swatch"
+                :style="{ background: preset.colors[theme]['--color-focus'] }"
+              ></span>
+              <span
+                class="theme-swatch"
+                :style="{ background: preset.colors[theme]['--color-short-break'] }"
+              ></span>
+              <span
+                class="theme-swatch"
+                :style="{ background: preset.colors[theme]['--color-long-break'] }"
+              ></span>
+            </span>
+          </div>
+          <div class="theme-card-header">
+            <span
+              class="theme-card-icon"
+              :style="{ color: preset.colors[theme]['--color-primary'] }"
+              aria-hidden="true"
+            >
+              <ThemeIcon :themeId="preset.id" slot="logo" :fallback="preset.icon" />
+            </span>
+            <span class="theme-card-name">{{ preset.name }}</span>
+          </div>
+          <span class="theme-card-desc">{{ preset.description }}</span>
+        </button>
       </div>
     </div>
 
@@ -317,7 +374,14 @@
 
 <script setup lang="ts">
 import { computed } from "vue";
-import type { TimerConfig, Theme, AzureConfig } from "../composables";
+import type {
+  TimerConfig,
+  Theme,
+  ThemePreset,
+  ThemePresetId,
+  AzureConfig,
+} from "../composables";
+import ThemeIcon from "./ThemeIcon.vue";
 
 const props = defineProps<{
   config: TimerConfig;
@@ -325,6 +389,8 @@ const props = defineProps<{
   notificationsEnabled: boolean;
   notificationPermission: NotificationPermission;
   theme: Theme;
+  themePresetId?: ThemePresetId;
+  availableThemes?: ThemePreset[];
   wakeLockEnabled: boolean;
   wakeLockSupported: boolean;
   compactMode: boolean;
@@ -338,6 +404,7 @@ const emit = defineEmits<{
   "update:config": [config: TimerConfig];
   toggleSound: [];
   toggleTheme: [];
+  selectThemePreset: [presetId: ThemePresetId];
   toggleWakeLock: [];
   toggleCompact: [];
   toggleUrgencyWarning: [];
@@ -509,6 +576,98 @@ const wakeLockButtonText = computed(() => {
   color: white;
 }
 
+.theme-presets-section {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.theme-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+}
+
+.theme-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.4rem;
+  padding: 0.5rem;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  color: var(--text-primary);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.theme-card-banner {
+  width: 100%;
+  height: 44px;
+  border-radius: 5px;
+  background-size: cover;
+  background-position: center;
+  border: 1px solid var(--border-color);
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  padding: 0.3rem 0.4rem;
+}
+
+.theme-card:hover {
+  border-color: var(--text-muted);
+  background: var(--bg-input);
+}
+
+.theme-card.active {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 1px var(--color-primary);
+  background: var(--bg-input);
+}
+
+.theme-card-header {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  width: 100%;
+}
+
+.theme-card-icon {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.theme-card-name {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.theme-swatches {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  margin-left: auto;
+}
+
+.theme-swatch {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.theme-card-desc {
+  font-size: 0.6875rem;
+  color: var(--text-secondary);
+  line-height: 1.3;
+}
+
 .cloud-sync-section {
   margin-top: 1.5rem;
   padding-top: 1rem;
@@ -533,6 +692,10 @@ const wakeLockButtonText = computed(() => {
 }
 
 @media (max-width: 600px) {
+  .theme-cards {
+    grid-template-columns: 1fr;
+  }
+
   .sync-fields {
     grid-template-columns: 1fr;
   }

@@ -1,10 +1,29 @@
 <template>
-  <div class="app" :class="[theme, { 'compact-mode': compactMode }]">
+  <div
+    class="app"
+    :class="[theme, `preset-${themePresetId}`, { 'compact-mode': compactMode }]"
+    :data-theme-preset="themePresetId"
+  >
+    <div v-if="activeThemePreset.backgroundImage" class="theme-bg-layer" aria-hidden="true"></div>
     <header class="header">
       <div class="header-left">
         <h1 class="logo">
-          <span class="logo-icon">🍅</span>
-          Pomotrack
+          <span class="logo-icon">
+            <ThemeIcon
+              :themeId="themePresetId"
+              slot="logo"
+              :fallback="activeThemePreset.icons.logo"
+            />
+          </span>
+          <span class="logo-text-group">
+            <span class="logo-title">{{ activeThemePreset.labels.appTitle }}</span>
+            <span
+              v-if="activeThemePreset.labels.appSubtitle"
+              class="logo-subtitle"
+            >
+              {{ activeThemePreset.labels.appSubtitle }}
+            </span>
+          </span>
         </h1>
         <template v-if="isConfigured">
           <button
@@ -119,7 +138,7 @@
     <main class="main">
       <div class="dashboard">
         <!-- Timer Section -->
-        <section class="timer-section">
+        <section class="timer-section themed-panel">
           <TimerDisplay
             :formattedTime="formattedTime"
             :sessionType="sessionType"
@@ -129,27 +148,40 @@
             :progress="progress"
             :completedPomodoros="completedPomodoros"
             :pomodorosUntilLongBreak="config.pomodorosUntilLongBreak"
+            :themeId="themePresetId"
+            :themeIcons="activeThemePreset.icons"
+            :modeLabels="activeThemePreset.labels.modes"
             @selectMode="handleSelectMode"
           />
           <TimerControls
             :isRunning="isRunning"
+            :labels="activeThemePreset.labels.controls"
             @start="handleStart"
             @pause="pause"
             @skip="handleSkip"
             @reset="handleReset"
           />
           <div class="keyboard-hint" v-if="!isRunning">
-            <span class="hint">Press <kbd>Space</kbd> to start</span>
+            <span class="hint">
+              {{ activeThemePreset.labels.controls.spaceHintBefore }}
+              <kbd>Space</kbd>
+              {{ activeThemePreset.labels.controls.spaceHintAfter }}
+            </span>
           </div>
         </section>
 
         <!-- Sidebar -->
         <aside class="sidebar">
-          <KanbanPanel v-if="kanbanEnabled" />
+          <KanbanPanel
+            v-if="kanbanEnabled"
+            :themeId="themePresetId"
+            :labels="activeThemePreset.labels.kanban"
+          />
           <SessionLabel
             v-else
             v-model="sessionLabel"
             :recentLabels="recentLabels"
+            :labels="activeThemePreset.labels.sessionLabel"
           />
 
           <StatsPanel
@@ -158,6 +190,9 @@
             :focusDuration="config.focusDuration"
             :dailyGoal="config.dailyGoal"
             :hasHistory="history.entries.length > 0"
+            :themeId="themePresetId"
+            :themeIcons="activeThemePreset.icons"
+            :labels="activeThemePreset.labels.stats"
             @showSummary="showSummaryModal = true"
           />
         </aside>
@@ -165,7 +200,7 @@
     </main>
 
     <footer class="footer">
-      <p>Stay focused. Take breaks. Repeat.</p>
+      <p>{{ activeThemePreset.tagline }}</p>
     </footer>
 
     <!-- Summary Modal -->
@@ -224,6 +259,8 @@
               :notificationsEnabled="notificationsEnabled"
               :notificationPermission="notificationPermission"
               :theme="theme"
+              :themePresetId="themePresetId"
+              :availableThemes="availableThemes"
               :wakeLockEnabled="wakeLockEnabled"
               :wakeLockSupported="wakeLockSupported"
               :compactMode="compactMode"
@@ -234,6 +271,7 @@
               @update:config="config = $event"
               @toggleSound="soundEnabled = !soundEnabled"
               @toggleTheme="toggleTheme"
+              @selectThemePreset="setThemePreset"
               @requestNotifications="handleRequestNotifications"
               @toggleWakeLock="wakeLockEnabled = !wakeLockEnabled"
               @toggleCompact="compactMode = !compactMode"
@@ -277,8 +315,8 @@
           <div class="goal-toast-content">
             <span class="goal-toast-icon">🏆</span>
             <div class="goal-toast-text">
-              <h4>Daily Goal Reached!</h4>
-              <p>Outstanding! You've completed {{ config.dailyGoal }} pomodoros today. 🎉</p>
+              <h4>{{ activeThemePreset.labels.goalToast.title }}</h4>
+              <p>{{ activeThemePreset.labels.goalToast.message.replace('{goal}', String(config.dailyGoal)) }}</p>
             </div>
           </div>
         </div>
@@ -299,6 +337,7 @@ import {
   SummaryModal,
   PullConfirmationModal,
   ConfirmModal,
+  ThemeIcon,
 } from "./components";
 import {
   useTimer,
@@ -414,7 +453,14 @@ onMounted(async () => {
 });
 
 // Theme
-const { theme, toggleTheme } = useTheme();
+const {
+  theme,
+  themePresetId,
+  activeThemePreset,
+  availableThemes,
+  toggleTheme,
+  setThemePreset,
+} = useTheme();
 
 // Session label (ephemeral)
 const sessionLabel = ref("");
@@ -606,6 +652,7 @@ const confirmClearData = () => {
   compactMode.value = false;
   kanbanEnabled.value = false;
   urgencyWarningEnabled.value = true;
+  setThemePreset("default");
   config.value = { ...defaultConfig };
 };
 
@@ -646,19 +693,63 @@ useKeyboardShortcuts(
 );
 
 // Update document title with timer
-watch([formattedTime, sessionType], ([time, type]) => {
-  const icon = type === "focus" ? "🍅" : "☕";
+watch([formattedTime, sessionType, activeThemePreset], ([time, type, preset]) => {
+  const icon =
+    type === "focus"
+      ? preset.icons.focus
+      : type === "short-break"
+        ? preset.icons.shortBreak
+        : preset.icons.longBreak;
   document.title = `${time} ${icon} Pomotrack`;
 });
 </script>
 
 <style scoped>
 .app {
+  position: relative;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   background: var(--bg-primary);
   color: var(--text-primary);
+  font-family: var(--font-body, inherit);
+}
+
+.theme-bg-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background-image: var(--theme-bg-image);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  pointer-events: none;
+}
+
+.theme-bg-layer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(0, 0, 0, 0.35) 0%,
+    rgba(0, 0, 0, 0.72) 100%
+  );
+}
+
+.app.light .theme-bg-layer::after {
+  background: radial-gradient(
+    ellipse at center,
+    rgba(255, 255, 255, 0.72) 0%,
+    rgba(255, 255, 255, 0.88) 100%
+  );
+}
+
+.header,
+.main,
+.footer {
+  position: relative;
+  z-index: 1;
 }
 
 .header {
@@ -668,6 +759,7 @@ watch([formattedTime, sessionType], ([time, type]) => {
   padding: 0.625rem 1.5rem;
   background: var(--header-bg);
   border-bottom: 1px solid var(--border-color);
+  backdrop-filter: blur(8px);
 }
 
 .header-left {
@@ -679,15 +771,37 @@ watch([formattedTime, sessionType], ([time, type]) => {
 .logo {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.625rem;
   font-size: 1.25rem;
   font-weight: 700;
+  font-family: var(--font-heading, inherit);
   margin: 0;
   color: var(--text-primary);
 }
 
 .logo-icon {
   font-size: 1.5rem;
+  color: var(--color-primary);
+  display: inline-flex;
+  align-items: center;
+}
+
+.logo-text-group {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+}
+
+.logo-title {
+  letter-spacing: 0.04em;
+}
+
+.logo-subtitle {
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  color: var(--color-primary);
+  opacity: 0.9;
 }
 
 .theme-toggle {

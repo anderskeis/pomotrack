@@ -1,11 +1,14 @@
 <template>
-  <div class="stats-panel">
-    <h3 class="panel-title">Daily Progress</h3>
+  <div class="stats-panel themed-panel">
+    <h3 class="panel-title">{{ labels?.dailyProgressTitle ?? 'Daily Progress' }}</h3>
     
     <!-- Daily Goal Progress -->
     <div class="goal-progress">
       <div class="goal-header">
-        <span class="goal-text">{{ completedPomodoros }}/{{ dailyGoal }} 🍅</span>
+        <span class="goal-text">
+          {{ completedPomodoros }}/{{ dailyGoal }}
+          <ThemeIcon :themeId="themeId || 'default'" slot="focus" :fallback="themeIcons?.focus" />
+        </span>
         <span class="goal-percent">{{ goalPercent }}%</span>
       </div>
       <div class="progress-bar">
@@ -15,44 +18,57 @@
           :class="{ complete: goalPercent >= 100 }"
         ></div>
       </div>
-      <p v-if="goalPercent >= 100" class="goal-complete">🎉 Daily goal reached!</p>
+      <p v-if="goalPercent >= 100" class="goal-complete">
+        {{ labels?.goalReachedText ?? '🎉 Daily goal reached!' }}
+      </p>
     </div>
 
     <div class="settings-divider"></div>
 
-    <h3 class="panel-title">Session Stats</h3>
+    <h3 class="panel-title">{{ labels?.sessionStatsTitle ?? 'Session Stats' }}</h3>
     <div class="stats-grid">
       <div class="stat-item">
-        <span class="stat-icon">🍅</span>
+        <span class="stat-icon">
+          <ThemeIcon :themeId="themeId || 'default'" slot="focus" :fallback="themeIcons?.focus" />
+        </span>
         <div class="stat-content">
           <span class="stat-value">{{ completedPomodoros }}</span>
-          <span class="stat-label">Pomodoros</span>
+          <span class="stat-label">{{ labels?.pomodorosLabel ?? 'Pomodoros' }}</span>
         </div>
       </div>
       <div class="stat-item">
-        <span class="stat-icon">☕</span>
+        <span class="stat-icon">
+          <ThemeIcon :themeId="themeId || 'default'" slot="shortBreak" :fallback="themeIcons?.shortBreak" />
+        </span>
         <div class="stat-content">
           <span class="stat-value">{{ completedBreaks }}</span>
-          <span class="stat-label">Breaks</span>
+          <span class="stat-label">{{ labels?.breaksLabel ?? 'Breaks' }}</span>
         </div>
       </div>
       <div class="stat-item">
-        <span class="stat-icon">⏱</span>
+        <span class="stat-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 1.15em; height: 1.15em; display: inline-block; vertical-align: middle;">
+            <circle cx="12" cy="13" r="8" />
+            <path d="M12 9V13L14.5 14.5M9 2H15" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+        </span>
         <div class="stat-content">
           <span class="stat-value">{{ focusTime }}</span>
-          <span class="stat-label">Focus Time</span>
+          <span class="stat-label">{{ labels?.focusTimeLabel ?? 'Focus Time' }}</span>
         </div>
       </div>
     </div>
 
     <button v-if="hasHistory" class="btn btn-summary" @click="$emit('showSummary')">
-      View Summary
+      {{ labels?.viewSummaryBtn ?? 'View Summary' }}
     </button>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import type { ThemeIcons, ThemeLabels } from '../composables'
+import ThemeIcon from './ThemeIcon.vue'
 
 const props = defineProps<{
   completedPomodoros: number
@@ -60,6 +76,9 @@ const props = defineProps<{
   focusDuration: number // minutes per pomodoro
   dailyGoal: number
   hasHistory: boolean
+  themeId?: string
+  themeIcons?: ThemeIcons
+  labels?: ThemeLabels['stats']
 }>()
 
 defineEmits<{

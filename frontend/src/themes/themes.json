@@ -1,0 +1,335 @@
+[
+  {
+    "id": "default",
+    "name": "Default",
+    "icon": "🍅",
+    "description": "Classic Pomotrack crimson & slate",
+    "tagline": "Stay focused. Take breaks. Repeat.",
+    "backgroundImage": "",
+    "fonts": {
+      "--font-body": "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif",
+      "--font-heading": "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif",
+      "--font-mono": "'SF Mono', 'Fira Code', 'Consolas', monospace"
+    },
+    "icons": {
+      "logo": "🍅",
+      "focus": "🍅",
+      "shortBreak": "☕",
+      "longBreak": "🌴"
+    },
+    "labels": {
+      "appTitle": "Pomotrack",
+      "appSubtitle": "",
+      "modes": {
+        "focus": "Focus",
+        "shortBreak": "Short Break",
+        "longBreak": "Long Break"
+      },
+      "controls": {
+        "start": "Start",
+        "pause": "Pause",
+        "skip": "Skip",
+        "reset": "Reset",
+        "spaceHintBefore": "Press",
+        "spaceHintAfter": "to start"
+      },
+      "sessionLabel": {
+        "title": "Session Label",
+        "placeholder": "What are you working on?",
+        "presets": ["Deep Work", "Meetings", "Learning", "Admin", "Creative"]
+      },
+      "kanban": {
+        "title": "Tasks",
+        "addPlaceholder": "Add a task...",
+        "todo": "To Do",
+        "inProgress": "In Progress",
+        "done": "Done",
+        "activeBadge": "Active",
+        "emptyTodo": "No tasks",
+        "emptyInProgress": "Drag or click ▶ on a task to start",
+        "emptyDone": "Completed tasks"
+      },
+      "stats": {
+        "dailyProgressTitle": "Daily Progress",
+        "goalReachedText": "🎉 Daily goal reached!",
+        "sessionStatsTitle": "Session Stats",
+        "pomodorosLabel": "Pomodoros",
+        "breaksLabel": "Breaks",
+        "focusTimeLabel": "Focus Time",
+        "viewSummaryBtn": "View Summary"
+      },
+      "goalToast": {
+        "title": "Daily Goal Reached!",
+        "message": "Outstanding! You've completed {goal} pomodoros today. 🎉"
+      }
+    },
+    "colors": {
+      "dark": {
+        "--bg-primary": "#0f0f0f",
+        "--bg-secondary": "#1a1a1a",
+        "--bg-subtle": "#252525",
+        "--bg-input": "#1f1f1f",
+        "--panel-bg": "#161616",
+        "--header-bg": "#0a0a0a",
+        "--text-primary": "#f5f5f5",
+        "--text-secondary": "#a0a0a0",
+        "--text-muted": "#666666",
+        "--border-color": "#2a2a2a",
+        "--color-primary": "#ef4444",
+        "--color-primary-hover": "#dc2626",
+        "--color-primary-shadow": "rgba(239, 68, 68, 0.25)",
+        "--color-secondary": "#6366f1",
+        "--color-secondary-hover": "#4f46e5",
+        "--color-focus": "#ef4444",
+        "--color-short-break": "#22c55e",
+        "--color-long-break": "#3b82f6",
+        "--color-urgency-warning": "#f59e0b",
+        "--color-urgency-critical": "#ef4444"
+      },
+      "light": {
+        "--bg-primary": "#f8fafc",
+        "--bg-secondary": "#ffffff",
+        "--bg-subtle": "#f1f5f9",
+        "--bg-input": "#ffffff",
+        "--panel-bg": "#ffffff",
+        "--header-bg": "#ffffff",
+        "--text-primary": "#0f172a",
+        "--text-secondary": "#475569",
+        "--text-muted": "#94a3b8",
+        "--border-color": "#e2e8f0",
+        "--color-primary": "#dc2626",
+        "--color-primary-hover": "#b91c1c",
+        "--color-primary-shadow": "rgba(220, 38, 38, 0.2)",
+        "--color-secondary": "#6366f1",
+        "--color-secondary-hover": "#4f46e5",
+        "--color-focus": "#ef4444",
+        "--color-short-break": "#22c55e",
+        "--color-long-break": "#3b82f6",
+        "--color-urgency-warning": "#d97706",
+        "--color-urgency-critical": "#dc2626"
+      }
+    }
+  },
+  {
+    "id": "warhammer40k",
+    "name": "Warhammer 40K",
+    "icon": "🦅",
+    "description": "Imperium of Man · Sanctified Gold & Mechanicus Cogitator",
+    "tagline": "++ IN THE GRIM DARKNESS OF THE FAR FUTURE, THERE IS ONLY FOCUS ++",
+    "backgroundImage": "/themes/warhammer40k-bg.jpg",
+    "fonts": {
+      "--font-body": "'Crimson Pro', Georgia, serif",
+      "--font-heading": "'Cinzel', Georgia, serif",
+      "--font-mono": "'Share Tech Mono', monospace"
+    },
+    "icons": {
+      "logo": "🦅",
+      "focus": "⚔️",
+      "shortBreak": "⚙️",
+      "longBreak": "🛡️"
+    },
+    "labels": {
+      "appTitle": "CHRONO-COGITATOR",
+      "appSubtitle": "ADEPTUS MECHANICUS · M41",
+      "modes": {
+        "focus": "Crusade Duty",
+        "shortBreak": "Rites of Maintenance",
+        "longBreak": "Warp Meditation"
+      },
+      "controls": {
+        "start": "Engage Rite",
+        "pause": "Stasis Seal",
+        "skip": "Advance Cycle",
+        "reset": "Purge Chrono",
+        "spaceHintBefore": "Invoke",
+        "spaceHintAfter": "to awaken the Machine Spirit"
+      },
+      "sessionLabel": {
+        "title": "Imperial Directive",
+        "placeholder": "Inscribe your sacred duty...",
+        "presets": ["STC Research", "War Council", "Schola Lore", "Administratum", "Forge Craft"]
+      },
+      "kanban": {
+        "title": "Imperial Decrees",
+        "addPlaceholder": "Issue new decree...",
+        "todo": "Awaiting Orders",
+        "inProgress": "Active Crusade",
+        "done": "Purged & Sealed",
+        "activeBadge": "Purity Seal",
+        "emptyTodo": "No decrees inscribed",
+        "emptyInProgress": "Deploy a decree to the active crusade",
+        "emptyDone": "Victories recorded in the Imperium"
+      },
+      "stats": {
+        "dailyProgressTitle": "Imperial Tithe",
+        "goalReachedText": "🦅 The Emperor Protects! Tithe fulfilled!",
+        "sessionStatsTitle": "Auspex Telemetry",
+        "pomodorosLabel": "Crusades",
+        "breaksLabel": "Restorations",
+        "focusTimeLabel": "Service Time",
+        "viewSummaryBtn": "Consult Data-Slate"
+      },
+      "goalToast": {
+        "title": "Imperial Tithe Fulfilled!",
+        "message": "Glory to the Omnissiah! You have completed {goal} sacred duties today."
+      }
+    },
+    "colors": {
+      "dark": {
+        "--bg-primary": "#0b0c0e",
+        "--bg-secondary": "rgba(20, 18, 15, 0.9)",
+        "--bg-subtle": "rgba(38, 33, 25, 0.85)",
+        "--bg-input": "rgba(15, 13, 10, 0.92)",
+        "--panel-bg": "rgba(18, 16, 13, 0.86)",
+        "--header-bg": "rgba(10, 9, 7, 0.92)",
+        "--text-primary": "#f2e8d5",
+        "--text-secondary": "#c2b295",
+        "--text-muted": "#8a7a60",
+        "--border-color": "#69542b",
+        "--color-primary": "#d4af37",
+        "--color-primary-hover": "#e6c555",
+        "--color-primary-shadow": "rgba(212, 175, 55, 0.4)",
+        "--color-secondary": "#9a1115",
+        "--color-secondary-hover": "#b81419",
+        "--color-focus": "#d4af37",
+        "--color-short-break": "#5cb811",
+        "--color-long-break": "#b91c1c",
+        "--color-urgency-warning": "#d97706",
+        "--color-urgency-critical": "#ef4444"
+      },
+      "light": {
+        "--bg-primary": "#efe6d2",
+        "--bg-secondary": "rgba(250, 244, 232, 0.92)",
+        "--bg-subtle": "rgba(232, 221, 198, 0.9)",
+        "--bg-input": "rgba(253, 250, 243, 0.95)",
+        "--panel-bg": "rgba(248, 241, 226, 0.9)",
+        "--header-bg": "rgba(234, 223, 200, 0.94)",
+        "--text-primary": "#1f1810",
+        "--text-secondary": "#594833",
+        "--text-muted": "#857156",
+        "--border-color": "#b0935a",
+        "--color-primary": "#9a1115",
+        "--color-primary-hover": "#7c0d10",
+        "--color-primary-shadow": "rgba(154, 17, 21, 0.3)",
+        "--color-secondary": "#b38f22",
+        "--color-secondary-hover": "#967618",
+        "--color-focus": "#9a1115",
+        "--color-short-break": "#3d7a05",
+        "--color-long-break": "#b38f22",
+        "--color-urgency-warning": "#c26100",
+        "--color-urgency-critical": "#b91c1c"
+      }
+    }
+  },
+  {
+    "id": "starwars",
+    "name": "Star Wars",
+    "icon": "⚔️",
+    "description": "Galactic HoloNet & Kyber Crystal Command Bridge",
+    "tagline": "// STAY ON TARGET · MAY THE FORCE BE WITH YOUR FOCUS //",
+    "backgroundImage": "/themes/starwars-bg.jpg",
+    "fonts": {
+      "--font-body": "'Rajdhani', sans-serif",
+      "--font-heading": "'Orbitron', sans-serif",
+      "--font-mono": "'Orbitron', monospace"
+    },
+    "icons": {
+      "logo": "⚔️",
+      "focus": "⚡",
+      "shortBreak": "🛸",
+      "longBreak": "🪐"
+    },
+    "labels": {
+      "appTitle": "HOLOCRON // CHRONO",
+      "appSubtitle": "SECTOR 7 · HOLONET UPLINK",
+      "modes": {
+        "focus": "Jedi Trial",
+        "shortBreak": "Bacta Recharge",
+        "longBreak": "Hyperspace Jump"
+      },
+      "controls": {
+        "start": "Ignite",
+        "pause": "Carbon Freeze",
+        "skip": "Jump Ahead",
+        "reset": "Recalibrate",
+        "spaceHintBefore": "Engage",
+        "spaceHintAfter": "to channel the Force"
+      },
+      "sessionLabel": {
+        "title": "Mission Target",
+        "placeholder": "Lock onto sector objective...",
+        "presets": ["Kyber Attunement", "Holo-Briefing", "Jedi Archives", "Fleet Command", "Droid Bay"]
+      },
+      "kanban": {
+        "title": "Tactical Bounties",
+        "addPlaceholder": "Transmit new bounty...",
+        "todo": "Briefing Queue",
+        "inProgress": "Target Locked",
+        "done": "Mission Complete",
+        "activeBadge": "Locked On",
+        "emptyTodo": "No active transmissions",
+        "emptyInProgress": "Lock onto a mission target",
+        "emptyDone": "Completed star-logs"
+      },
+      "stats": {
+        "dailyProgressTitle": "Daily Kyber Quota",
+        "goalReachedText": "⚔️ The Force is strong with you! Quota met!",
+        "sessionStatsTitle": "Nav-Computer Telemetry",
+        "pomodorosLabel": "Trials",
+        "breaksLabel": "Bacta Cycles",
+        "focusTimeLabel": "Flight Time",
+        "viewSummaryBtn": "Open Holo-Log"
+      },
+      "goalToast": {
+        "title": "Jedi Mastery Achieved!",
+        "message": "Impressive, most impressive! {goal} trials completed today."
+      }
+    },
+    "colors": {
+      "dark": {
+        "--bg-primary": "#050911",
+        "--bg-secondary": "rgba(11, 19, 32, 0.88)",
+        "--bg-subtle": "rgba(19, 34, 56, 0.82)",
+        "--bg-input": "rgba(8, 15, 26, 0.92)",
+        "--panel-bg": "rgba(9, 16, 28, 0.84)",
+        "--header-bg": "rgba(5, 9, 17, 0.9)",
+        "--text-primary": "#e2f8ff",
+        "--text-secondary": "#7cc2e6",
+        "--text-muted": "#4b80a6",
+        "--border-color": "#0088cc",
+        "--color-primary": "#00c4ff",
+        "--color-primary-hover": "#38d2ff",
+        "--color-primary-shadow": "rgba(0, 196, 255, 0.45)",
+        "--color-secondary": "#e8202a",
+        "--color-secondary-hover": "#ff333d",
+        "--color-focus": "#00c4ff",
+        "--color-short-break": "#00e676",
+        "--color-long-break": "#ffb000",
+        "--color-urgency-warning": "#ffb000",
+        "--color-urgency-critical": "#e8202a"
+      },
+      "light": {
+        "--bg-primary": "#e8f0f8",
+        "--bg-secondary": "rgba(255, 255, 255, 0.9)",
+        "--bg-subtle": "rgba(218, 232, 246, 0.88)",
+        "--bg-input": "rgba(255, 255, 255, 0.95)",
+        "--panel-bg": "rgba(246, 250, 255, 0.9)",
+        "--header-bg": "rgba(232, 241, 250, 0.94)",
+        "--text-primary": "#091526",
+        "--text-secondary": "#2f5275",
+        "--text-muted": "#6284a6",
+        "--border-color": "#4ea1d3",
+        "--color-primary": "#0077cc",
+        "--color-primary-hover": "#005fa3",
+        "--color-primary-shadow": "rgba(0, 119, 204, 0.3)",
+        "--color-secondary": "#d61f29",
+        "--color-secondary-hover": "#b51720",
+        "--color-focus": "#0077cc",
+        "--color-short-break": "#00a854",
+        "--color-long-break": "#d98200",
+        "--color-urgency-warning": "#d98200",
+        "--color-urgency-critical": "#d61f29"
+      }
+    }
+  }
+]

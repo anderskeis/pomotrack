@@ -1,6 +1,6 @@
 <template>
-  <div class="kanban-panel">
-    <h3 class="panel-title">Tasks</h3>
+  <div class="kanban-panel themed-panel">
+    <h3 class="panel-title">{{ labels?.title ?? 'Tasks' }}</h3>
 
     <!-- Add Task Input -->
     <div class="add-task">
@@ -8,7 +8,7 @@
         v-model="newTaskTitle"
         @keyup.enter="handleAddTask"
         type="text"
-        placeholder="Add a task..."
+        :placeholder="labels?.addPlaceholder ?? 'Add a task...'"
         maxlength="50"
         class="input task-input"
       />
@@ -30,7 +30,7 @@
         @drop="handleDrop($event, 'todo')"
       >
         <div class="column-header">
-          <span class="column-title">To Do</span>
+          <span class="column-title">{{ labels?.todo ?? 'To Do' }}</span>
           <span class="column-count">{{ todoTasks.length }}</span>
         </div>
         <div class="column-tasks">
@@ -64,7 +64,9 @@
               </button>
             </div>
           </div>
-          <div v-if="todoTasks.length === 0" class="column-empty">No tasks</div>
+          <div v-if="todoTasks.length === 0" class="column-empty">
+            {{ labels?.emptyTodo ?? 'No tasks' }}
+          </div>
         </div>
       </div>
 
@@ -75,7 +77,7 @@
         @drop="handleDrop($event, 'in-progress')"
       >
         <div class="column-header">
-          <span class="column-title">In Progress</span>
+          <span class="column-title">{{ labels?.inProgress ?? 'In Progress' }}</span>
           <span class="column-count">{{ inProgressTasks.length }}</span>
         </div>
         <div class="column-tasks">
@@ -93,12 +95,14 @@
               class="active-badge"
               title="Active task receiving Pomodoro focus counts"
             >
-              🎯 Active
+              <ThemeIcon :themeId="themeId || 'default'" slot="active" />
+              {{ labels?.activeBadge ?? 'Active' }}
             </span>
             <span class="task-title" :title="task.title">{{ task.title }}</span>
             <div class="task-meta">
               <span class="task-pomodoros" v-if="task.pomodorosCompleted > 0">
-                {{ task.pomodorosCompleted }} 🍅
+                {{ task.pomodorosCompleted }}
+                <ThemeIcon :themeId="themeId || 'default'" slot="focus" />
               </span>
             </div>
             <div class="task-actions">
@@ -132,7 +136,7 @@
             </div>
           </div>
           <div v-if="inProgressTasks.length === 0" class="column-empty">
-            Drag or click ▶ on a task to start
+            {{ labels?.emptyInProgress ?? 'Drag or click ▶ on a task to start' }}
           </div>
         </div>
       </div>
@@ -144,7 +148,7 @@
         @drop="handleDrop($event, 'done')"
       >
         <div class="column-header">
-          <span class="column-title">Done</span>
+          <span class="column-title">{{ labels?.done ?? 'Done' }}</span>
           <span class="column-count">{{ doneTasks.length }}</span>
           <button
             v-if="doneTasks.length > 0"
@@ -168,7 +172,8 @@
           >
             <span class="task-title" :title="task.title">{{ task.title }}</span>
             <span class="task-pomodoros" v-if="task.pomodorosCompleted > 0">
-              {{ task.pomodorosCompleted }} 🍅
+              {{ task.pomodorosCompleted }}
+              <ThemeIcon :themeId="themeId || 'default'" slot="focus" />
             </span>
             <div class="task-actions">
               <button
@@ -192,7 +197,7 @@
             </div>
           </div>
           <div v-if="doneTasks.length === 0" class="column-empty">
-            Completed tasks
+            {{ labels?.emptyDone ?? 'Completed tasks' }}
           </div>
         </div>
       </div>
@@ -207,6 +212,13 @@ import {
   type KanbanTask,
   type KanbanStatus,
 } from "../composables/useKanban";
+import type { ThemeLabels } from "../composables";
+import ThemeIcon from "./ThemeIcon.vue";
+
+defineProps<{
+  themeId?: string;
+  labels?: ThemeLabels["kanban"];
+}>();
 
 const {
   todoTasks,
