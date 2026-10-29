@@ -1,5 +1,5 @@
 # ---- Stage 1: Build Frontend ----
-FROM node:22-alpine AS frontend-builder
+FROM node:26-alpine AS frontend-builder
 
 WORKDIR /app/frontend
 
@@ -16,12 +16,12 @@ COPY frontend/ ./
 RUN npm run build
 
 # ---- Stage 2: Python Runtime ----
-FROM python:3.12-slim AS runtime
+FROM python:3.15-slim AS runtime
 
 WORKDIR /app
 
 # Install uv for fast dependency management
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+COPY --from=ghcr.io/astral-sh/uv:0.13.6 /uv /usr/local/bin/uv
 
 # Copy dependency manifest and lockfile for reproducible installs
 COPY backend/pyproject.toml backend/uv.lock ./
