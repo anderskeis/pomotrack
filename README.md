@@ -37,7 +37,7 @@ docker compose up -d --build
 Open **http://localhost:8080**. SQLite data persists in the `pomotrack-data` Docker volume.
 
 ### Local Development
-**Prerequisites:** Python 3.11+, Node.js 22+, `uv`
+**Prerequisites:** Python 3.11+, Node.js 26 (LTS), `uv`
 
 ```bash
 # Backend (port 7070)
