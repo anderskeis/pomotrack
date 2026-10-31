@@ -74,6 +74,22 @@ app.include_router(api_router, prefix="/api")
 static_path = Path(__file__).parent.parent / "static"
 static_path_resolved = static_path.resolve()
 
+
+async def serve_spa(full_path: str):
+    """Serve the SPA for all non-API routes."""
+    # Normalize the requested path, then verify it stays within the
+    # static directory to prevent path traversal attacks.
+    base_path = str(static_path_resolved)
+    resolved = os.path.realpath(os.path.join(base_path, full_path))
+    if not resolved.startswith(base_path + os.sep):
+        return FileResponse(static_path / "index.html")
+
+    file_path = Path(resolved)
+    if file_path.is_file():
+        return FileResponse(file_path)
+    return FileResponse(static_path / "index.html")
+
+
 if static_path.exists():
     # Serve static assets (JS, CSS, images)
     assets_path = static_path / "assets"
@@ -86,17 +102,4 @@ if static_path.exists():
         app.mount("/sounds", StaticFiles(directory=sounds_path), name="sounds")
 
     # SPA fallback - serve index.html for all non-API routes
-    @app.get("/{full_path:path}")
-    async def serve_spa(full_path: str):
-        """Serve the SPA for all non-API routes."""
-        # Normalize the requested path, then verify it stays within the
-        # static directory to prevent path traversal attacks.
-        base_path = str(static_path_resolved)
-        resolved = os.path.realpath(os.path.join(base_path, full_path))
-        if not resolved.startswith(base_path + os.sep):
-            return FileResponse(static_path / "index.html")
-
-        file_path = Path(resolved)
-        if file_path.is_file():
-            return FileResponse(file_path)
-        return FileResponse(static_path / "index.html")
+    app.get("/{full_path:path}")(serve_spa)
