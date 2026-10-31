@@ -1,5 +1,6 @@
 """FastAPI application entry point."""
 
+import os
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -88,17 +89,14 @@ if static_path.exists():
     @app.get("/{full_path:path}")
     async def serve_spa(full_path: str):
         """Serve the SPA for all non-API routes."""
-        # Resolve the requested path
-        file_path = (static_path / full_path).resolve()
-
-        # Security: Prevent path traversal attacks
-        # Ensure the resolved path is within the static directory
-        try:
-            file_path.relative_to(static_path_resolved)
-        except ValueError:
-            # Path is outside static directory - return index.html
+        # Normalize the requested path, then verify it stays within the
+        # static directory to prevent path traversal attacks.
+        base_path = str(static_path_resolved)
+        resolved = os.path.realpath(os.path.join(base_path, full_path))
+        if not resolved.startswith(base_path + os.sep):
             return FileResponse(static_path / "index.html")
 
-        if file_path.exists() and file_path.is_file():
+        file_path = Path(resolved)
+        if file_path.is_file():
             return FileResponse(file_path)
         return FileResponse(static_path / "index.html")
